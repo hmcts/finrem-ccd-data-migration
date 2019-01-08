@@ -1,4 +1,4 @@
-# Divorce Application to migrate data within CCD. 
+# Finrem Application to migrate data within CCD. 
 
 
 
@@ -26,14 +26,14 @@ To build project please execute the following command:
 - To access to aat, the proxy must be set on http / https need to proxyout.reform.hmcts.net:8080
 - A Case Work user for aat is required
 
-in ./build/libs locate divorce-1.0.0-SNAPSHOT.jar and run it with this commande line
+in ./build/libs locate finrem-1.0.0-SNAPSHOT.jar and run it with this commande line
 
 In read mode only (default mode):
-java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -jar divorce-1.0.0-SNAPSHOT.jar
+java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -jar finrem-1.0.0-SNAPSHOT.jar
 
 In read and update mode:
-java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.update=true -jar divorce-1.0.0-SNAPSHOT.jar
-WARNING: THIS WILL UPDATE ALL THE DIVORCE CASES IN CCD IN A FEW MINUTES!!!
+java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.update=true -jar finrem-1.0.0-SNAPSHOT.jar
+WARNING: THIS WILL UPDATE ALL THE FR CASES IN CCD IN A FEW MINUTES!!!
 
 ### How to twist the application
 
