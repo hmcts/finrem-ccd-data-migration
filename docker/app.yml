@@ -6,16 +6,16 @@ services:
     image: "hmcts/finrem-case-orchestration:latest"
     container_name: finrem-case-orchestration
     ports:
-      - 9000:9000
+    - 9000:9000
     environment:
       FINREM_NOTIFICATION_SERVICE_BASE_URL: http://finrem-notification-service:8086
       DOCUMENT_GENERATOR_SERVICE_API_BASEURL: http://finrem-document-generator-client:4009
     depends_on:
-      - ccd-case-management-web
-#     - finrem-notification-service
-      - finrem-document-generator-client
-#    links:
-#      - finrem-notification-service
+    - ccd-case-management-web
+    #      - finrem-notification-service
+    - finrem-document-generator-client
+  #    links:
+  #      - finrem-notification-service
 
   ccd-case-management-web:
     image: "hmcts/ccd-case-management-web:${CCD_CASE_MANAGEMENT_WEB_TAG:-latest}"
@@ -28,10 +28,10 @@ services:
       OAUTH2_CLIENT_ID: ccd_gateway
       DM_GATEWAY_BASE_URL: http://ccd-api-gateway:3453
     ports:
-      - 3451:3451
+    - 3451:3451
     depends_on:
-      - ccd-api-gateway
-      - dm-store
+    - ccd-api-gateway
+    - dm-store
 
   ccd-api-gateway:
     image: "hmcts/ccd-api-gateway:${CCD_API_GATEWAY_TAG:-latest}"
@@ -53,12 +53,12 @@ services:
       APPINSIGHTS_INSTRUMENTATIONKEY: key
       PROXY_DOCUMENT_MANAGEMENT: http://dm-store:8080
     ports:
-      - 3453:3453
+    - 3453:3453
     depends_on:
-      - ccd-user-profile-api
-      - ccd-definition-store-api
-      - ccd-data-store-api
-      - dm-store
+    - ccd-user-profile-api
+    - ccd-definition-store-api
+    - ccd-data-store-api
+    - dm-store
 
   authentication-web:
     image: docker.artifactory.reform.hmcts.net/auth/authentication-web:latest
@@ -69,11 +69,11 @@ services:
       REFORM_TEAM: idam
       REFORM_ENVIRONMENT: local
     ports:
-      - 3501:8000
+    - 3501:8000
     links:
-      - idam-api
+    - idam-api
     depends_on:
-      - idam-api
+    - idam-api
 
   ccd-user-profile-api:
     image: "hmcts/ccd-user-profile-api:${CCD_USER_PROFILE_API_TAG:-latest}"
@@ -83,19 +83,19 @@ services:
       USER_PROFILE_DB_USERNAME: "${DB_USERNAME}"
       USER_PROFILE_DB_PASSWORD: "${DB_PASSWORD}"
       USER_PROFILE_DB_USE_SSL: "${DB_USE_SSL}"
-      USER_PROFILE_S2S_AUTHORISED_SERVICES: ccd_data,ccd_definition,ccd_admin
+      USER_PROFILE_S2S_AUTHORISED_SERVICES: ccd_data,ccd_definition,ccd_admin,finrem_ccd_data_migrator
       IDAM_S2S_URL: http://service-auth-provider-api:8080
       REFORM_SERVICE_NAME: ccd-user-profile-api
       REFORM_TEAM: ccd
       REFORM_ENVIRONMENT: local
       APPINSIGHTS_INSTRUMENTATIONKEY: key
     ports:
-      - 4453:4453
+    - 4453:4453
     depends_on:
-      - ccd-shared-database
+    - ccd-shared-database
     links:
-      - ccd-shared-database
-      - service-auth-provider-api
+    - ccd-shared-database
+    - service-auth-provider-api
 
   ccd-definition-store-api:
     image: "hmcts/ccd-definition-store-api:${CCD_DEFINITION_STORE_API_TAG:-latest}"
@@ -106,7 +106,7 @@ services:
       DEFINITION_STORE_DB_PASSWORD: "${DB_PASSWORD}"
       DEFINITION_STORE_DB_USE_SSL: "${DB_USE_SSL}"
       DEFINITION_STORE_IDAM_KEY: "${IDAM_KEY_CCD_DEFINITION_STORE}"
-      DEFINITION_STORE_S2S_AUTHORISED_SERVICES: ccd_data,ccd_gw,ccd_admin
+      DEFINITION_STORE_S2S_AUTHORISED_SERVICES: ccd_data,ccd_gw,ccd_admin,finrem_ccd_data_migrator
       USER_PROFILE_HOST: http://ccd-user-profile-api:4453
       IDAM_USER_URL: http://idam-api:8080
       IDAM_S2S_URL: http://service-auth-provider-api:8080
@@ -115,15 +115,15 @@ services:
       REFORM_ENVIRONMENT: local
       APPINSIGHTS_INSTRUMENTATIONKEY: key
     ports:
-      - 4451:4451
+    - 4451:4451
     depends_on:
-      - ccd-shared-database
-      - ccd-user-profile-api
+    - ccd-shared-database
+    - ccd-user-profile-api
     links:
-      - ccd-shared-database
-      - ccd-user-profile-api
-      - idam-api
-      - service-auth-provider-api
+    - ccd-shared-database
+    - ccd-user-profile-api
+    - idam-api
+    - service-auth-provider-api
 
   ccd-data-store-api:
     image: "hmcts/ccd-data-store-api:${CCD_DATA_STORE_API_TAG:-latest}"
@@ -133,9 +133,9 @@ services:
       DATA_STORE_DB_USERNAME: "${DB_USERNAME}"
       DATA_STORE_DB_PASSWORD: "${DB_PASSWORD}"
       DATA_STORE_DB_USE_SSL: "${DB_USE_SSL}"
-      DATA_STORE_IDAM_KEY: "AAAAAAAAAAAAAAAA"
-      DATA_STORE_TOKEN_SECRET: AAAAAAAAAAAAAAAA
-      DATA_STORE_S2S_AUTHORISED_SERVICES: ccd_gw, finrem_ccd_data_migrator, divorce
+      DATA_STORE_IDAM_KEY: "${IDAM_KEY_CCD_DATA_STORE}"
+      DATA_STORE_TOKEN_SECRET: iuasbcuasdcbasdgcasdgcuysachjsacyasdgjcgasdj
+      DATA_STORE_S2S_AUTHORISED_SERVICES: ccd_gw,finrem_ccd_data_migrator
       DEFINITION_STORE_HOST: http://ccd-definition-store-api:4451
       USER_PROFILE_HOST: http://ccd-user-profile-api:4453
       IDAM_USER_URL: http://idam-api:8080
@@ -146,18 +146,18 @@ services:
       APPINSIGHTS_INSTRUMENTATIONKEY: key
       CCD_DM_DOMAIN: http://dm-store:8080
     ports:
-      - 4452:4452
+    - 4452:4452
     depends_on:
-      - ccd-shared-database
-      - ccd-user-profile-api
-      - ccd-definition-store-api
+    - ccd-shared-database
+    - ccd-user-profile-api
+    - ccd-definition-store-api
     links:
-      - ccd-shared-database
-      - ccd-user-profile-api
-      - ccd-definition-store-api
-      - idam-api
-      - service-auth-provider-api
-#
+    - ccd-shared-database
+    - ccd-user-profile-api
+    - ccd-definition-store-api
+    - idam-api
+    - service-auth-provider-api
+  #
   idam-api:
     image: docker.artifactory.reform.hmcts.net/auth/idam-api:latest
     healthcheck:
@@ -173,11 +173,10 @@ services:
       IDAM_TESTING_SUPPORT_ENABLED: "true"
       NOTIFY_API_KEY: AAAAAAAAAAAAAAAA
       NOTIFY_CMC_ACTIVATE_USER_TEMPLATE: 76aa8695-64e8-4afd-ae13-bc8385302b1f
-      IDAM_SECRET: AAAAAAAAAAAAAAAA
-      IDAM_API_OAUTH2_CLIENT_CLIENT_SECRETS_CCD_DATA: "AAAAAAAAAAAAAAAA"
-      IDAM_API_OAUTH2_CLIENT_CLIENT_SECRETS_CCD_GATEWAY: "AAAAAAAAAAAAAAAA"
-      IDAM_API_OAUTH2_CLIENT_CLIENT_SECRETS_CCD_ADMIN: "AAAAAAAAAAAAAAAA"
-      IDAM_API_OAUTH2_CLIENT_CLIENT_SECRETS_FINREM: AAAAAAAAAAAAAAAA
+      IDAM_SECRET: idam_test_secret
+      IDAM_API_OAUTH2_CLIENT_CLIENT_SECRETS_CCD_GATEWAY: "${OAUTH2_CLIENT_CCD_GATEWAY}"
+      IDAM_API_OAUTH2_CLIENT_CLIENT_SECRETS_CCD_ADMIN: "${OAUTH2_CLIENT_CCD_ADMIN}"
+      IDAM_API_OAUTH2_CLIENT_CLIENT_SECRETS_FINREM: "${OAUTH2_CLIENT_FINREM}"
       IDAM_CCD_WHITELIST: http://localhost:3451/oauth2redirect
       IDAM_CCD_ADMIN_WHITELIST: https://localhost:3100/oauth2redirect
       IDAM_FINREM_WHITELIST: https://localhost:9000/oauth2/callback
@@ -197,13 +196,13 @@ services:
       https_proxy:
       no_proxy:
     ports:
-      - 4501:8080
+    - 4501:8080
     links:
-      - smtp-server
-      - ccd-shared-database
+    - smtp-server
+    - ccd-shared-database
     depends_on:
-      - ccd-shared-database
-      - smtp-server
+    - ccd-shared-database
+    - smtp-server
 
   service-auth-provider-api:
     image: hmcts/service-auth-provider-app
@@ -212,19 +211,19 @@ services:
       timeout: 10s
       retries: 10
     ports:
-      - 4502:8080
+    - 4502:8080
     environment:
       SERVER_PORT: 8080
       JWT_KEY: wThK0f0/lh3FlxFcL4xUWDMI5C1J9KyQBgXV4wseh1e5J1uYJIjvTvArHxQDrYoHJ23xFxjHkOnvNbR5dXRoxA==
-      MICROSERVICE_KEYS_CCD_DATA: "AAAAAAAAAAAAAAAA"
-      MICROSERVICE_KEYS_CCD_GW: "AAAAAAAAAAAAAAAA"
-      MICROSERVICE_KEYS_CCD_DEFINITION: "AAAAAAAAAAAAAAAA"
-      MICROSERVICE_KEYS_CCD_ADMIN: "AAAAAAAAAAAAAAAA"
+      MICROSERVICEKEYS_CCD_DATA: "${IDAM_KEY_CCD_DATA_STORE}"
+      MICROSERVICEKEYS_CCD_GW: "${IDAM_KEY_CCD_GATEWAY}"
+      MICROSERVICEKEYS_CCD_DEFINITION: "${IDAM_KEY_CCD_DEFINITION_STORE}"
+      MICROSERVICEKEYS_CCD_ADMIN: "${IDAM_KEY_CCD_ADMIN}"
       TESTING_SUPPORT_ENABLED: "true"
-      MICROSERVICE_KEYS_EM_GW: "${IDAM_KEY_DM_STORE}"
-      MICROSERVICE_KEYS_FINREM_DOCUMENT_GENERATOR: "AAAAAAAAAAAAAAAA"
-      MICROSERVICE_KEYS_FINREM_CCD_DATA_MIGRATOR: "AAAAAAAAAAAAAAAA"
-      MICROSERVICE_KEYS_DIVORCE: "AAAAAAAAAAAAAAAA"
+      MICROSERVICEKEYS_EM_GW: "${IDAM_KEY_DM_STORE}"
+      MICROSERVICEKEYS_FINREM_DOCUMENT_GENERATOR: "AAAAAAAAAAAAAAAA"
+      MICROSERVICEKEYS_FINREM_CCD_DATA_MIGRATOR: "AAAAAAAAAAAAAAAA"
+      MICROSERVICEKEYS_DIVORCE: "AAAAAAAAAAAAAAAA"
 
   dm-store:
     image: "hmcts/dm-store:${DM_STORE_TAG:-latest}"
@@ -269,31 +268,31 @@ services:
     #      debug mode
     #    JAVA_OPTS: -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005
     links:
-      - ccd-shared-database
-      - idam-api
-      - service-auth-provider-api
+    - ccd-shared-database
+    - idam-api
+    - service-auth-provider-api
     depends_on:
-      - ccd-shared-database
-      - idam-api
-      - service-auth-provider-api
+    - ccd-shared-database
+    - idam-api
+    - service-auth-provider-api
 
 
     ports:
 
 
 
-      - 4506:8080
+    - 4506:8080
     #   debug port exposed
     #   - 5006:5005
 
   azure-storage-emulator-azurite:
     image: arafato/azurite
     ports:
-      - 10000:10000
+    - 10000:10000
     environment:
       executable: "blob"
     volumes:
-      - ccd-docker-azure-blob-data:/opt/azurite/folder
+    - ccd-docker-azure-blob-data:/opt/azurite/folder
 
   smtp-server:
     image: mailhog/mailhog
@@ -309,9 +308,9 @@ services:
       DB_USERNAME:
       DB_PASSWORD:
     ports:
-      - 5000:5432
+    - 5000:5432
     volumes:
-      - ccd-docker-ccd-shared-database-data:/var/lib/postgresql/data
+    - ccd-docker-ccd-shared-database-data:/var/lib/postgresql/data
 
   finrem-notification-service:
     image: hmcts/finrem-notification-service:latest
@@ -319,7 +318,7 @@ services:
     environment:
       UK_GOV_NOTIFY_API_KEY: "${UK_GOV_NOTIFY_API_KEY}"
     ports:
-     - 8086:8086
+    - 8086:8086
 
   finrem-document-generator-client:
     image: hmcts/finrem-document-generator-client:latest
@@ -328,24 +327,24 @@ services:
       PDF_SERVICE_ACCESS_KEY: "${PDF_SERVICE_ACCESS_KEY}"
       EVIDENCE_MANAGEMENT_CLIENT_API_BASEURL: http://evidence-management-client-api:4006
     ports:
-      - 4009:4009
+    - 4009:4009
     depends_on:
-      - finrem-evidence-management-client-api
+    - finrem-evidence-management-client-api
 
   finrem-evidence-management-client-api:
     image: hmcts/finrem-evidence-management-client-api:latest
     container_name: evidence-management-client-api
     environment:
-      - AUTH_PROVIDER_SERVICE_CLIENT_BASEURL=http://service-auth-provider-api:8080
-      - DOCUMENT_MANAGEMENT_STORE_URL=http://dm-store:8080
-      - IDAM_API_URL=http://idam-api:8080
-      - AUTH_PROVIDER_SERVICE_CLIENT_MICROSERVICE=finrem_document_generator
+    - AUTH_PROVIDER_SERVICE_CLIENT_BASEURL=http://service-auth-provider-api:8080
+    - DOCUMENT_MANAGEMENT_STORE_URL=http://dm-store:8080
+    - IDAM_API_URL=http://idam-api:8080
+    - AUTH_PROVIDER_SERVICE_CLIENT_MICROSERVICE=finrem_document_generator
     ports:
-      - 4006:4006
+    - 4006:4006
     depends_on:
-      - service-auth-provider-api
-      - dm-store
-      - idam-api
+    - service-auth-provider-api
+    - dm-store
+    - idam-api
 
 volumes:
   ccd-docker-ccd-shared-database-data:

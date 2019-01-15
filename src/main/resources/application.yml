@@ -14,15 +14,15 @@ server:
 idam:
   api:
     url: ${IDAM_URL:http://localhost:4501}
-    secret: AAAAAAAAAAAAAAAA
+    secret: ${OAUTH2_CLIENT_FINREM:AAAAAAAAAAAAAAAA}
   username: ${USER_NAME:claire_fr_mumford@yahoo.com}
   userpassword: ${PASSWORD:London01}
   whitelist:
       url: https://localhost:9000/oauth2/callback
 
   s2s-auth:
-    microservice: divorce
-    totp_secret: ${S2S_SECRET:AAAAAAAAAAAAAAAA}
+    microservice: finrem_ccd_data_migrator
+    totp_secret: AAAAAAAAAAAAAAAA
     url: ${S2S_URL:http://localhost:4502}
     port: 4502
     health:
@@ -35,11 +35,13 @@ ccd:
   casetype: FinancialRemedyMVP2
   eventid:
     create: create
+    #space seperated list of cases
+  casesList: ${CCD_CASE_ID:""}
   server:
     port: 4452
     health:
       context-path: /status/health
-  update: false
+  update: true
 
 core_case_data:
   api:

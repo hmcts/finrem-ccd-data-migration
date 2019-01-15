@@ -60,6 +60,9 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Autowired
     private MigrationService migrationService;
 
+    @Value("${ccd.casesList}")
+    private String ccdCases;
+
     public static void main(String[] args) {
         SpringApplication.run(DataMigrationProcessor.class, args);
     }
@@ -67,6 +70,8 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Override
     public void run(String... args) {
         log.info("Start processing cases");
+
+        log.info("CCD Cases >>" + ccdCases);
 
         String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
         log.info("  userToken  ", userToken);
@@ -111,7 +116,13 @@ public class DataMigrationProcessor implements CommandLineRunner {
             caseDetails.stream()
                 .filter(migrationService::accepts)
                 .collect(Collectors.toList()))
-            .forEach(cd -> updateOneCase(authorisation, cd));
+                //.forEach(cd -> printCase(cd));
+                .forEach(cd -> updateOneCase(authorisation, cd));
+    }
+
+    private void printCase(CaseDetails cd) {
+        Map<String, Object> data = cd.getData();
+        log.info("case Id " + cd.getId());
     }
 
     private int requestNumberOfPage(String authorisation,
@@ -132,6 +143,8 @@ public class DataMigrationProcessor implements CommandLineRunner {
     private void updateOneCase(String authorisation, CaseDetails cd) {
         String caseId = cd.getId().toString();
         log.info("updating case with id :" + caseId);
+
+        printCase(cd);
 
         if (ccdUpdate) {
             try {
