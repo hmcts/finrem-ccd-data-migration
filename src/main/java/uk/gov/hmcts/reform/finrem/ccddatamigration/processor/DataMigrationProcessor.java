@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.finrem.ccddatamigration.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -16,6 +15,7 @@ import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserClient;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserService;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.service.MigrationService;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +24,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class DataMigrationProcessor implements CommandLineRunner {
-
-    private static String EVENT_ID = "updateContactDetails";
-
     @Value("${ccd.update}")
     private boolean ccdUpdate;
 
@@ -61,7 +58,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
     private MigrationService migrationService;
 
     @Value("${ccd.casesList}")
-    private String ccdCases;
+    private String[] ccdCaseIds;
 
     public static void main(String[] args) {
         SpringApplication.run(DataMigrationProcessor.class, args);
@@ -70,8 +67,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Override
     public void run(String... args) {
         log.info("Start processing cases");
-
-        log.info("CCD Cases >>" + ccdCases);
+        log.info("CCD Cases >>" + ccdCaseIds);
 
         String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
         log.info("  userToken  ", userToken);
@@ -80,15 +76,18 @@ public class DataMigrationProcessor implements CommandLineRunner {
         String userId = idamUserService.retrieveUserDetails(userToken).getId();
         log.info("  userId   ", userId);
 
-        Map<String, String> searchCriteria = new HashMap<>();
-//        searchCriteria.put("state", "AwaitingPayment");
-//        searchCriteria.put("case.D8HelpWithFeesNeedHelp", "YES");
-        int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, searchCriteria);
-
-        //Process all the pages
-        for (int i = numberOfPages; i > 0; i--) {
-            log.debug("Process page:" + i);
-            processOnePage(userToken, s2sToken, userId, i, searchCriteria);
+        if (ccdCaseIds.length > 0) {
+            CaseDetails aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseIds[0]);
+            migrationService.processData(Arrays.asList(aCase))
+                    .forEach(cd -> updateOneCase(userToken, cd));
+        } else {
+            Map<String, String> searchCriteria = new HashMap<>();
+            int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, searchCriteria);
+            //Process all the pages
+            for (int i = numberOfPages; i > 0; i--) {
+                log.debug("Process page:" + i);
+                processOnePage(userToken, s2sToken, userId, i, searchCriteria);
+            }
         }
         log.debug("Data migration completed");
         log.debug("Total number of cases: " + migrationService.getTotalNumberOfCases());
@@ -113,16 +112,10 @@ public class DataMigrationProcessor implements CommandLineRunner {
 
         //Process all the cases
         migrationService.processData(
-            caseDetails.stream()
-                .filter(migrationService::accepts)
-                .collect(Collectors.toList()))
-                //.forEach(cd -> printCase(cd));
+                caseDetails.stream()
+                        .filter(migrationService::accepts)
+                        .collect(Collectors.toList()))
                 .forEach(cd -> updateOneCase(authorisation, cd));
-    }
-
-    private void printCase(CaseDetails cd) {
-        Map<String, Object> data = cd.getData();
-        log.info("case Id " + cd.getId());
     }
 
     private int requestNumberOfPage(String authorisation,
@@ -143,9 +136,6 @@ public class DataMigrationProcessor implements CommandLineRunner {
     private void updateOneCase(String authorisation, CaseDetails cd) {
         String caseId = cd.getId().toString();
         log.info("updating case with id :" + caseId);
-
-        printCase(cd);
-
         if (ccdUpdate) {
             try {
                 migrationService.updateCase(authorisation, cd);

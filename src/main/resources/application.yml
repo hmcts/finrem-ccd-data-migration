@@ -36,7 +36,7 @@ ccd:
   eventid:
     create: create
     #space seperated list of cases
-  casesList: ${CCD_CASE_ID:""}
+  casesList: ${CCD_CASE_ID:1548091081380392}
   server:
     port: 4452
     health:

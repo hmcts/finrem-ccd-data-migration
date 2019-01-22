@@ -17,10 +17,7 @@ import uk.gov.hmcts.reform.finrem.ccddatamigration.domain.UserDetails;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserService;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
