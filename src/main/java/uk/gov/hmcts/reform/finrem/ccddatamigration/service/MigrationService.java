@@ -15,4 +15,12 @@ public interface MigrationService {
     int getTotalMigrationsPerformed();
 
     int getTotalNumberOfCases();
+
+    void processSingleCase(String userToken, String s2sToken, String caseId);
+
+    void updateOneCase(String authorisation, CaseDetails cd);
+
+    void processAllTheCases(String userToken, String s2sToken, String userId);
+
+    String getFailedCases();
 }
