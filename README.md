@@ -28,11 +28,18 @@ To build project please execute the following command:
 
 in ./build/libs locate finrem-1.0.0-SNAPSHOT.jar and run it with this commande line
 
-In read mode only (default mode):
-java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -jar finrem-1.0.0-SNAPSHOT.jar
+In Dryrun mode(default mode):
+`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
 
-In read and update mode:
-java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.update=true -jar finrem-1.0.0-SNAPSHOT.jar
+In Complete mode:
+
+`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.dryrun=false -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
+
+To run for a single case:
+
+`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.dryrun=false  -Dccd.caseId="caseId" -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
+
+
 WARNING: THIS WILL UPDATE ALL THE FR CASES IN CCD IN A FEW MINUTES!!!
 
 ### How to twist the application
