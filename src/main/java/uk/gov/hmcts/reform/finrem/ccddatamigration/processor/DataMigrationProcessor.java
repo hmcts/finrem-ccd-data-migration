@@ -12,8 +12,6 @@ import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserClient;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserService;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.service.MigrationService;
 
-import java.util.List;
-
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Slf4j
@@ -35,6 +33,9 @@ public class DataMigrationProcessor implements CommandLineRunner {
 
     @Value("${ccd.caseId}")
     private String ccdCaseId;
+
+    @Value("${ccd.dryrun}")
+    private boolean dryRun;
 
     @Autowired
     private IdamUserClient idamClient;
@@ -67,7 +68,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
             log.info("Given caseId  {}", ccdCaseId);
             migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
         } else {
-            migrationService.processAllTheCases(userToken, s2sToken, userId);
+            migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType, dryRun);
         }
         log.info("-----------------------------");
         log.info("Data migration completed");

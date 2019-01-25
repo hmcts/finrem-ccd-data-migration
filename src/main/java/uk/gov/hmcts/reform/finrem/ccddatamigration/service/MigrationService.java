@@ -6,21 +6,15 @@ import java.util.List;
 
 public interface MigrationService {
 
-    List<CaseDetails> processData(List<CaseDetails> caseDetails);
-
     boolean accepts(CaseDetails caseDetails);
 
-    void updateCase(String authorisation, CaseDetails cd) throws Exception;
+    void processSingleCase(String userToken, String s2sToken, String caseId);
+
+    void processAllTheCases(String userToken, String s2sToken, String userId, String jurisdictionId,
+                            String caseType, boolean dryRun);
+    String getFailedCases();
 
     int getTotalMigrationsPerformed();
 
     int getTotalNumberOfCases();
-
-    void processSingleCase(String userToken, String s2sToken, String caseId);
-
-    void updateOneCase(String authorisation, CaseDetails cd);
-
-    void processAllTheCases(String userToken, String s2sToken, String userId);
-
-    String getFailedCases();
 }

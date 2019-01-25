@@ -29,6 +29,7 @@ To build project please execute the following command:
 in ./build/libs locate finrem-1.0.0-SNAPSHOT.jar and run it with this commande line
 
 In Dryrun mode(default mode):
+
 `java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
 
 In Complete mode:
