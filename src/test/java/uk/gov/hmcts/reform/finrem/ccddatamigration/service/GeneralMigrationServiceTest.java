@@ -6,15 +6,18 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.util.ReflectionUtils;
 import uk.gov.hmcts.reform.ccd.client.CoreCaseDataApi;
 import uk.gov.hmcts.reform.ccd.client.model.CaseDetails;
 import uk.gov.hmcts.reform.ccd.client.model.PaginatedSearchMetadata;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.ccd.CcdUpdateService;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,6 +33,7 @@ public class GeneralMigrationServiceTest {
     private static final String USER_ID = "30";
     private static final String JURISDICTION_ID = "divorce";
     private static final String CASE_TYPE = "FinancialRemedyMVP2";
+
     @InjectMocks
     private GeneralMigrationService migrationService;
 
@@ -39,32 +43,11 @@ public class GeneralMigrationServiceTest {
     @Mock
     private CoreCaseDataApi ccdApi;
 
-    @Test
-    public void shouldReturnTrueWhenAcceptTheCaseWithSolicitorAddress1() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("solicitorAddress1", "188 cityView");
-        data.put("solicitorAddress2", "Ilford");
-        CaseDetails caseDetails = CaseDetails.builder()
-                .data(data)
-                .build();
-
-        assertThat(migrationService.accepts(caseDetails), Is.is(true));
-    }
+    private Map<String, String> searchCriteriaForPagination;
+    private Map<String, String> searchCriteriaForCaseWorker;
 
     @Test
-    public void shouldReturnFalseWhenAcceptTheCaseWithSolicitorAddress1() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("solicitorAddress2", "188 cityView");
-        data.put("solicitorAddress3", "Ilford");
-        CaseDetails caseDetails = CaseDetails.builder()
-                .data(data)
-                .build();
-
-        assertThat(migrationService.accepts(caseDetails), Is.is(false));
-    }
-
-    @Test
-    public void ShouldProcessASingleCase() {
+    public void shouldProcessASingleCase() {
         CaseDetails caseDetails = CaseDetails.builder()
                 .id(1111L).build();
         when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
@@ -75,21 +58,27 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessOnlyOneCandidateCase_whenDryRunIsTrue() {
-        setupMocks();
-        migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE, true);
+        setupMocks(true);
+        migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
         assertThat(migrationService.getTotalNumberOfCases(), Is.is(1));
         assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(1));
+        assertNull(migrationService.getFailedCases());
     }
 
     @Test
-    public void shouldProcessOnlyOneCandidateCase_whenDryRunIsFalse() {
-        setupMocks();
-        migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE, false);
+    public void shouldProcessAllTheCandidateCases_whenDryRunIsFalse() {
+        setupMocks(false);
+        migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
         assertThat(migrationService.getTotalNumberOfCases(), Is.is(2));
         assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(2));
+        assertNull(migrationService.getFailedCases());
     }
 
-    private void setupMocks() {
+    private void setupMocks(boolean dryRun) {
+        Field field = ReflectionUtils.findField(GeneralMigrationService.class, "dryRun");
+        ReflectionUtils.makeAccessible(field);
+        ReflectionUtils.setField(field, migrationService, dryRun);
+
         Map<String, Object> data1 = new HashMap<>();
         data1.put("solicitorAddress1", "188 cityView");
         CaseDetails caseDetails1 = CaseDetails.builder()
@@ -102,17 +91,22 @@ public class GeneralMigrationServiceTest {
                 .id(1112L)
                 .data(data2)
                 .build();
+        Map<String, Object> data3 = new HashMap<>();
+        CaseDetails caseDetails3 = CaseDetails.builder()
+                .id(1112L)
+                .data(data3)
+                .build();
 
         PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
         paginatedSearchMetadata.setTotalPagesCount(1);
         paginatedSearchMetadata.setTotalResultsCount(2);
 
-        Map<String, String> searchCriteria = new HashMap<>();
+        searchCriteriaForPagination = new HashMap<>();
         when(ccdApi.getPaginationInfoForSearchForCaseworkers(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID,
-                CASE_TYPE, searchCriteria)).thenReturn(paginatedSearchMetadata);
+                CASE_TYPE, searchCriteriaForPagination)).thenReturn(paginatedSearchMetadata);
 
-        Map<String, String> searchCriteria1 = new HashMap<>();
-        searchCriteria1.put("page", "1");
+        searchCriteriaForCaseWorker = new HashMap<>();
+        searchCriteriaForCaseWorker.put("page", "1");
 
         when(ccdApi.searchForCaseworker(
                 USER_TOKEN,
@@ -120,7 +114,7 @@ public class GeneralMigrationServiceTest {
                 USER_ID,
                 JURISDICTION_ID,
                 CASE_TYPE,
-                searchCriteria1))
-                .thenReturn(asList(caseDetails1, caseDetails2));
+                searchCriteriaForCaseWorker))
+                .thenReturn(asList(caseDetails1, caseDetails2, caseDetails3));
     }
 }

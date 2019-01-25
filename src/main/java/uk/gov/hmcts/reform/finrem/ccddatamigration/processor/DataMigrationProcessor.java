@@ -37,6 +37,9 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Value("${ccd.dryrun}")
     private boolean dryRun;
 
+    @Value("${log.debug}")
+    private boolean debugEnabled;
+
     @Autowired
     private IdamUserClient idamClient;
 
@@ -57,18 +60,21 @@ public class DataMigrationProcessor implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("Start processing cases");
         String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
-        log.info("  userToken  : {}", userToken);
         String s2sToken = authTokenGenerator.generate();
-        log.info("  s2sToken : {}", s2sToken);
         String userId = idamUserService.retrieveUserDetails(userToken).getId();
-        log.info("  userId  : {}", userId);
+        if(debugEnabled) {
+            log.info("Start processing cases");
+            log.info("  userToken  : {}", userToken);
+            log.info("  s2sToken : {}", s2sToken);
+            log.info("  userId  : {}", userId);
+        }
+
         if (isNotBlank(ccdCaseId)) {
             log.info("Given caseId  {}", ccdCaseId);
             migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
         } else {
-            migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType, dryRun);
+            migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
         }
         log.info("-----------------------------");
         log.info("Data migration completed");

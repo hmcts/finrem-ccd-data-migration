@@ -10,6 +10,7 @@ spring:
 
 server:
   port: 4016
+log.debug: ${DEBUG:false}
 
 idam:
   api:

@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.finrem.ccddatamigration.service;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.reform.ccd.client.CoreCaseDataApi;
 import uk.gov.hmcts.reform.ccd.client.model.CaseDetails;
@@ -12,7 +13,9 @@ import uk.gov.hmcts.reform.finrem.ccddatamigration.ccd.CcdUpdateService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -41,13 +44,15 @@ public class GeneralMigrationService implements MigrationService {
     @Getter
     private String failedCases;
 
-    @Override
-    public boolean accepts(CaseDetails caseDetails) {
-        if (caseDetails == null || caseDetails.getData() == null) {
-            return false;
-        }
-        Map<String, Object> data = caseDetails.getData();
-        return !isEmpty(data.get(SOLICITOR_ADDRESS_1));
+    @Value("${log.debug}")
+    private boolean debugEnabled;
+
+    @Value("${ccd.dryrun}")
+    private boolean dryRun;
+
+    private static Predicate<CaseDetails> accepts() {
+        return caseDetails -> caseDetails != null && caseDetails.getData() != null
+                && !isEmpty(caseDetails.getData().get(SOLICITOR_ADDRESS_1));
     }
 
     @Override
@@ -58,56 +63,19 @@ public class GeneralMigrationService implements MigrationService {
 
     @Override
     public void processAllTheCases(String userToken, String s2sToken, String userId,
-                                   String jurisdictionId, String caseType, boolean dryRun) {
+                                   String jurisdictionId, String caseType) {
         Map<String, String> searchCriteria = new HashMap<>();
+        //searchCriteria.put(SOLICITOR_ADDRESS_1, "solicitorAddress.AddressLine1");
         int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria);
-        List<CaseDetails> list;
-        boolean found = false;
-        for (int i = numberOfPages; i > 0 && !found; i--) {
-            log.info("Process page:" + i);
-            searchCriteria.put("page", String.valueOf(i));
-            List<CaseDetails> caseDetails = getCases(
-                    userToken,
-                    s2sToken,
-                    userId,
-                    jurisdictionId,
-                    caseType,
-                    searchCriteria);
 
-            printData(caseDetails);
+        if (dryRun) {
+            dryRunWithOneCase(userToken, s2sToken, userId, jurisdictionId, caseType, numberOfPages);
 
-            list = caseDetails.stream()
-                    .filter(this::accepts)
-                    .collect(Collectors.toList());
-            if (!list.isEmpty()) {
-                if (dryRun) {
-                    found = true;
-                    log.info("dryRun with case Id  {}", list.get(0).getId());
-                    updateOneCase(userToken, list.get(0));
-                } else {
-                    log.info("migrating all the cases ..");
-                    list.forEach(cd -> updateOneCase(userToken, cd));
-                }
-            }
+        } else {
+            IntStream.rangeClosed(1, numberOfPages)
+                    .forEach(page -> migrateCasesForPage(userToken, s2sToken, userId,
+                            jurisdictionId, caseType, page));
         }
-        if (!found) {
-            log.info("No matching cases for data migration");
-        }
-    }
-
-    private List<CaseDetails> getCases(String userToken,
-                                       String s2sToken,
-                                       String userId,
-                                       String jurisdictionId,
-                                       String caseType,
-                                       Map<String, String> searchCriteria) {
-        return ccdApi.searchForCaseworker(
-                userToken,
-                s2sToken,
-                userId,
-                jurisdictionId,
-                caseType,
-                searchCriteria);
     }
 
     private int requestNumberOfPage(String authorisation,
@@ -123,15 +91,78 @@ public class GeneralMigrationService implements MigrationService {
                 jurisdictionId,
                 caseType,
                 searchCriteria);
-        log.debug("Pagination>>" + paginationInfoForSearchForCaseworkers.toString());
+        if (debugEnabled) {
+            log.debug("Pagination>>" + paginationInfoForSearchForCaseworkers.toString());
+        }
         return paginationInfoForSearchForCaseworkers.getTotalPagesCount();
+    }
+
+    private void dryRunWithOneCase(String userToken, String s2sToken, String userId,
+                                   String jurisdictionId, String caseType, int numberOfPages) {
+        boolean found = false;
+        for (int i = 1; i >= numberOfPages && !found; i++) {
+            List<CaseDetails> casesForPage = getCasesForPage(userToken, s2sToken, userId,
+                    jurisdictionId, caseType, i);
+            if (casesForPage.size() > 0) {
+                found = true;
+                updateOneCase(userToken, casesForPage.get(0));
+            }
+        }
+    }
+
+    private List<CaseDetails> getCasesForPage(String userToken,
+                                              String s2sToken,
+                                              String userId,
+                                              String jurisdictionId,
+                                              String caseType,
+                                              int pageNumber) {
+        Map<String, String> searchCriteria = new HashMap<>();
+        searchCriteria.put("page", String.valueOf(pageNumber));
+        return ccdApi.searchForCaseworker(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria)
+                .stream()
+                .filter(accepts())
+                .collect(Collectors.toList());
+
+    }
+
+    private void migrateCasesForPage(String userToken,
+                                     String s2sToken,
+                                     String userId,
+                                     String jurisdictionId,
+                                     String caseType,
+                                     int pageNumber) {
+        getCasesForPage(userToken, s2sToken, userId, jurisdictionId, caseType, pageNumber)
+                .stream()
+                .filter(accepts())
+                .forEach(cd -> updateOneCase(userToken, cd));
+    }
+
+
+    private void updateOneCase(String authorisation, CaseDetails cd) {
+        totalNumberOfCases++;
+        String caseId = cd.getId().toString();
+        if (debugEnabled) {
+            log.debug("updating case with id :" + caseId);
+        }
+        try {
+            updateCase(authorisation, cd);
+            if (debugEnabled) {
+                log.debug(caseId + " updated!");
+            }
+        } catch (Exception e) {
+            if (debugEnabled) {
+                log.debug("update failed for case with id [{}] with error [{}] ", cd.getId().toString(), e.getMessage());
+            }
+            updateFailedCases(cd.getId());
+        }
     }
 
     private void updateCase(String authorisation, CaseDetails cd) {
         String caseId = cd.getId().toString();
         Object data = cd.getData();
-        log.info("data {}", data.toString());
-
+        if (debugEnabled) {
+            log.debug("data {}", data.toString());
+        }
         CaseDetails update = ccdUpdateService.update(caseId,
                 data,
                 EVENT_ID,
@@ -145,24 +176,4 @@ public class GeneralMigrationService implements MigrationService {
         failedCases = nonNull(failedCases) ? (failedCases + "," + id) : id.toString();
     }
 
-    private void updateOneCase(String authorisation, CaseDetails cd) {
-        totalNumberOfCases++;
-        String caseId = cd.getId().toString();
-        log.info("updating case with id :" + caseId);
-        try {
-            updateCase(authorisation, cd);
-            log.info(caseId + " updated!");
-        } catch (Exception e) {
-            log.error("update failed for case with id [{}] with error [{}] ", cd.getId().toString(), e.getMessage());
-            updateFailedCases(cd.getId());
-        }
-    }
-
-    private List<CaseDetails> printData(List<CaseDetails> caseDetails) {
-        for (CaseDetails caseDetail : caseDetails) {
-            log.debug("Case Before Migration " + caseDetail.toString()
-                    .replace(System.getProperty("line.separator"), " "));
-        }
-        return caseDetails;
-    }
 }
