@@ -31,7 +31,7 @@ version = '1.0.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-mainClassName = 'uk.gov.hmcts.reform.finrem.ccddatamigration.CddDataMigrationApplication'
+mainClassName = 'uk.gov.hmcts.reform.finrem.ccddatamigration.CcdDataMigrationApplication'
 
 compileJava {
     options.compilerArgs << '-parameters' << '-Xlint:deprecation'

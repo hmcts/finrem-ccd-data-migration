@@ -16,6 +16,6 @@ public class CcdDataMigrationApplication {
 //        System.setProperty("https.proxyHost", "proxyout.reform.hmcts.net");
 //        System.setProperty("https.proxyPort", "8080");
 
-        SpringApplication.run(CcdDataMigrationApplication.class, args);
+        SpringApplication.run(CcdDataMigrationApplication.class, args).close();
     }
 }

@@ -59,11 +59,11 @@ public class DataMigrationProcessor implements CommandLineRunner {
     public void run(String... args) {
         log.info("Start processing cases");
         String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
-        log.info("  userToken  ", userToken);
+        log.info("  userToken  : {}", userToken);
         String s2sToken = authTokenGenerator.generate();
-        log.info("  s2sToken  ", s2sToken);
+        log.info("  s2sToken : {}", s2sToken);
         String userId = idamUserService.retrieveUserDetails(userToken).getId();
-        log.info("  userId   ", userId);
+        log.info("  userId  : {}", userId);
         if (isNotBlank(ccdCaseId)) {
             log.info("Given caseId  {}", ccdCaseId);
             migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
