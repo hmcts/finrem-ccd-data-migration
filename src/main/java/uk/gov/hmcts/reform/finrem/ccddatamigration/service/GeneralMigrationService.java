@@ -57,8 +57,17 @@ public class GeneralMigrationService implements MigrationService {
 
     @Override
     public void processSingleCase(String userToken, String s2sToken, String ccdCaseId) {
-        CaseDetails aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
-        updateOneCase(userToken, aCase);
+        CaseDetails aCase;
+        try {
+            aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
+            if (aCase != null && aCase.getData() != null && !isEmpty(aCase.getData().get(SOLICITOR_ADDRESS_1))) {
+                updateOneCase(userToken, aCase);
+            } else {
+                log.info("Case {} doesn't have redundant fields", aCase.getId());
+            }
+        } catch (Exception ex) {
+            log.error("case Id {} not found, {}", ccdCaseId, ex.getMessage());
+        }
     }
 
     @Override
@@ -69,9 +78,11 @@ public class GeneralMigrationService implements MigrationService {
         int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria);
 
         if (dryRun) {
+            log.info("dryRun for one cases ...");
             dryRunWithOneCase(userToken, s2sToken, userId, jurisdictionId, caseType, numberOfPages);
 
         } else {
+            log.info("migrating all the cases ...");
             IntStream.rangeClosed(1, numberOfPages)
                     .forEach(page -> migrateCasesForPage(userToken, s2sToken, userId,
                             jurisdictionId, caseType, page));
@@ -100,7 +111,7 @@ public class GeneralMigrationService implements MigrationService {
     private void dryRunWithOneCase(String userToken, String s2sToken, String userId,
                                    String jurisdictionId, String caseType, int numberOfPages) {
         boolean found = false;
-        for (int i = 1; i >= numberOfPages && !found; i++) {
+        for (int i = 1; i <= numberOfPages && !found; i++) {
             List<CaseDetails> casesForPage = getCasesForPage(userToken, s2sToken, userId,
                     jurisdictionId, caseType, i);
             if (casesForPage.size() > 0) {

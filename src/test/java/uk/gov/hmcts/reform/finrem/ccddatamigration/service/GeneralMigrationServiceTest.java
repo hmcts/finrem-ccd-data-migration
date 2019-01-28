@@ -37,6 +37,7 @@ public class GeneralMigrationServiceTest {
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
+    private static final String SOLICITOR_ADDRESS_1 = "solicitorAddress1";
 
     @InjectMocks
     private GeneralMigrationService migrationService;
@@ -56,8 +57,12 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessASingleCaseAndMigrationIsSuccessful() {
+        Map<String, Object> data = new HashMap<>();
+        data.put(SOLICITOR_ADDRESS_1, "188 City View");
         CaseDetails caseDetails = CaseDetails.builder()
-                .id(1111L).build();
+                .id(1111L)
+                .data(data)
+                .build();
         when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
@@ -68,9 +73,27 @@ public class GeneralMigrationServiceTest {
     }
 
     @Test
-    public void shouldProcessASingleCaseAndMigrationIsFailed() {
+    public void shouldNotProcessASingleCaseWithOutRedundantFields() {
         CaseDetails caseDetails = CaseDetails.builder()
-                .id(1111L).build();
+                .id(1111L)
+                .build();
+        when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
+                .thenReturn(caseDetails);
+        migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), Is.is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(0));
+        assertNull(migrationService.getFailedCases());
+    }
+
+    @Test
+    public void shouldProcessASingleCaseAndMigrationIsFailed() {
+        Map<String, Object> data = new HashMap<>();
+        data.put(SOLICITOR_ADDRESS_1, "188 City View");
+        CaseDetails caseDetails = CaseDetails.builder()
+                .id(1111L)
+                .data(data)
+                .build();
         when(ccdUpdateService.update(caseDetails.getId().toString(),
                 caseDetails.getData(),
                 EVENT_ID,
@@ -143,7 +166,7 @@ public class GeneralMigrationServiceTest {
         Field field = ReflectionUtils.findField(GeneralMigrationService.class, "dryRun");
         ReflectionUtils.makeAccessible(field);
         ReflectionUtils.setField(field, migrationService, dryRun);
-        if(debug) {
+        if (debug) {
             Field debugEnabled = ReflectionUtils.findField(GeneralMigrationService.class, "debugEnabled");
             ReflectionUtils.makeAccessible(debugEnabled);
             ReflectionUtils.setField(debugEnabled, migrationService, debug);
@@ -190,7 +213,7 @@ public class GeneralMigrationServiceTest {
 
     private CaseDetails createCaseDetails(long id, String solicitorAddress1) {
         Map<String, Object> data1 = new HashMap<>();
-        data1.put("solicitorAddress1", solicitorAddress1);
+        data1.put(SOLICITOR_ADDRESS_1, solicitorAddress1);
         return CaseDetails.builder()
                 .id(id)
                 .data(data1)

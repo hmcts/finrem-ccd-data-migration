@@ -28,7 +28,6 @@ public class IdamUtils implements IdamUserClient {
                 .header("Authorization", authHeader)
                 .relaxedHTTPSValidation()
                 .post(idamCodeUrl());
-
         if (response.getStatusCode() >= 300) {
             throw new IllegalStateException("Token generation failed with code: " + response.getStatusCode()
                     + " body: " + response.getBody().prettyPrint());

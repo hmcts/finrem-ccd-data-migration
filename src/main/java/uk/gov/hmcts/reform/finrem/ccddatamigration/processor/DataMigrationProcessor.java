@@ -65,7 +65,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
         String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
         String s2sToken = authTokenGenerator.generate();
         String userId = idamUserService.retrieveUserDetails(userToken).getId();
-        if(debugEnabled) {
+        if (debugEnabled) {
             log.info("Start processing cases");
             log.info("  userToken  : {}", userToken);
             log.info("  s2sToken : {}", s2sToken);
@@ -73,7 +73,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
         }
 
         if (isNotBlank(ccdCaseId)) {
-            log.info("Given caseId  {}", ccdCaseId);
+            log.info("migrate case, caseId  {}", ccdCaseId);
             migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
         } else {
             migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
@@ -84,7 +84,8 @@ public class DataMigrationProcessor implements CommandLineRunner {
         log.info("Total number of cases: " + migrationService.getTotalNumberOfCases());
         log.info("Total migrations performed: " + migrationService.getTotalMigrationsPerformed());
         log.info("-----------------------------");
-        log.info("Failed Cases {}", migrationService.getFailedCases());
+        log.info("Failed Cases {}",
+                isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
 
     }
 }
