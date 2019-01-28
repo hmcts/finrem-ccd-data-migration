@@ -19,7 +19,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @Component
 @Configuration
 @PropertySource("classpath:application.properties")
-@PropertySource("classpath:application-${env}.properties")
 public class DataMigrationProcessor implements CommandLineRunner {
 
     @Value("${idam.username}")
