@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.reform.authorisation.generators.AuthTokenGenerator;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserClient;
@@ -17,6 +18,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 @Slf4j
 @Component
 @Configuration
+@PropertySource("classpath:application.properties")
+@PropertySource("classpath:application-${env}.properties")
 public class DataMigrationProcessor implements CommandLineRunner {
 
     @Value("${idam.username}")

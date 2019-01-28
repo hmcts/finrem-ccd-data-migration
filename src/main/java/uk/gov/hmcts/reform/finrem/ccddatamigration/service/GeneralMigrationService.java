@@ -151,7 +151,8 @@ public class GeneralMigrationService implements MigrationService {
             }
         } catch (Exception e) {
             if (debugEnabled) {
-                log.debug("update failed for case with id [{}] with error [{}] ", cd.getId().toString(), e.getMessage());
+                log.debug("update failed for case with id [{}] with error [{}] ", cd.getId().toString(),
+                        e.getMessage());
             }
             updateFailedCases(cd.getId());
         }
