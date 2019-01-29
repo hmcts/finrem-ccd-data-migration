@@ -116,6 +116,7 @@ public class GeneralMigrationService implements MigrationService {
                     jurisdictionId, caseType, i);
             if (casesForPage.size() > 0) {
                 found = true;
+                log.info("Migrating Case Id {} for the dryRun", casesForPage.get(0).getId());
                 updateOneCase(userToken, casesForPage.get(0));
             }
         }
