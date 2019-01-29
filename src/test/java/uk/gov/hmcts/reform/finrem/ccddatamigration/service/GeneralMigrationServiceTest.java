@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.EMPTY_LIST;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
@@ -116,7 +117,8 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessOnlyOneCandidateCase_whenDryRunIsTrue() {
-        setupMocks(true, true);
+        setupFields(true, true);
+        setupMocks();
         migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
         assertThat(migrationService.getTotalNumberOfCases(), Is.is(1));
         assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(1));
@@ -125,7 +127,8 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessAllTheCandidateCases_whenDryRunIsFalseAndOneCaseFailed() {
-        setupMocks(false, true);
+        setupFields(false, true);
+        setupMocks();
         setUpMockForUpdate(caseDetails1);
         setUpMockForUpdate(caseDetails2);
         when(ccdUpdateService.update(caseDetails3.getId().toString(),
@@ -142,7 +145,8 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessAllTheCandidateCases_whenDryRunIsFalseAndTwoCasesFailed() {
-        setupMocks(false, false);
+        setupFields(false, false);
+        setupMocks();
         setUpMockForUpdate(caseDetails1);
         when(ccdUpdateService.update(caseDetails2.getId().toString(),
                 caseDetails2.getData(),
@@ -162,16 +166,37 @@ public class GeneralMigrationServiceTest {
         assertThat(migrationService.getFailedCases(), Is.is("1112,1113"));
     }
 
-    private void setupMocks(boolean dryRun, boolean debug) {
-        Field field = ReflectionUtils.findField(GeneralMigrationService.class, "dryRun");
-        ReflectionUtils.makeAccessible(field);
-        ReflectionUtils.setField(field, migrationService, dryRun);
-        if (debug) {
-            Field debugEnabled = ReflectionUtils.findField(GeneralMigrationService.class, "debugEnabled");
-            ReflectionUtils.makeAccessible(debugEnabled);
-            ReflectionUtils.setField(debugEnabled, migrationService, debug);
-        }
+    @Test
+    public void shouldProcessNoCaseWhenNoCasesAvailableWithDryRun() {
+        setupFields(true, false);
+        PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
+        paginatedSearchMetadata.setTotalPagesCount(0);
+        paginatedSearchMetadata.setTotalResultsCount(0);
 
+        setupMocksForSearchCases(EMPTY_LIST, paginatedSearchMetadata);
+
+        migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
+        assertThat(migrationService.getTotalNumberOfCases(), Is.is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(0));
+        assertNull(migrationService.getFailedCases());
+    }
+
+    @Test
+    public void shouldProcessNoCaseWhenNoCasesAvailableWithDryRunAsFalse() {
+        setupFields(false, false);
+        PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
+        paginatedSearchMetadata.setTotalPagesCount(0);
+        paginatedSearchMetadata.setTotalResultsCount(0);
+
+        setupMocksForSearchCases(EMPTY_LIST, paginatedSearchMetadata);
+
+        migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
+        assertThat(migrationService.getTotalNumberOfCases(), Is.is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(0));
+        assertNull(migrationService.getFailedCases());
+    }
+
+    private void setupMocks() {
         caseDetails1 = createCaseDetails(1111L, "188 cityView");
         caseDetails2 = createCaseDetails(1112L, "189 cityView");
         caseDetails3 = createCaseDetails(1113L, "186 cityView");
@@ -181,6 +206,17 @@ public class GeneralMigrationServiceTest {
         paginatedSearchMetadata.setTotalResultsCount(3);
 
         setupMocksForSearchCases(asList(caseDetails1, caseDetails2, caseDetails3), paginatedSearchMetadata);
+    }
+
+    private void setupFields(boolean dryRun, boolean debug) {
+        Field field = ReflectionUtils.findField(GeneralMigrationService.class, "dryRun");
+        ReflectionUtils.makeAccessible(field);
+        ReflectionUtils.setField(field, migrationService, dryRun);
+        if (debug) {
+            Field debugEnabled = ReflectionUtils.findField(GeneralMigrationService.class, "debugEnabled");
+            ReflectionUtils.makeAccessible(debugEnabled);
+            ReflectionUtils.setField(debugEnabled, migrationService, debug);
+        }
     }
 
     private void setUpMockForUpdate(CaseDetails caseDetails1) {
