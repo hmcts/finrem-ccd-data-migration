@@ -78,7 +78,7 @@ public class GeneralMigrationService implements MigrationService {
         int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria);
 
         if (dryRun) {
-            log.info("dryRun for one cases ...");
+            log.info("dryRun for one case ...");
             dryRunWithOneCase(userToken, s2sToken, userId, jurisdictionId, caseType, numberOfPages);
 
         } else {
@@ -154,16 +154,16 @@ public class GeneralMigrationService implements MigrationService {
         totalNumberOfCases++;
         String caseId = cd.getId().toString();
         if (debugEnabled) {
-            log.debug("updating case with id :" + caseId);
+            log.info("updating case with id :" + caseId);
         }
         try {
             updateCase(authorisation, cd);
             if (debugEnabled) {
-                log.debug(caseId + " updated!");
+                log.info(caseId + " updated!");
             }
         } catch (Exception e) {
             if (debugEnabled) {
-                log.debug("update failed for case with id [{}] with error [{}] ", cd.getId().toString(),
+                log.info("update failed for case with id [{}] with error [{}] ", cd.getId().toString(),
                         e.getMessage());
             }
             updateFailedCases(cd.getId());
@@ -174,7 +174,7 @@ public class GeneralMigrationService implements MigrationService {
         String caseId = cd.getId().toString();
         Object data = cd.getData();
         if (debugEnabled) {
-            log.debug("data {}", data.toString());
+            log.info("data {}", data.toString());
         }
         CaseDetails update = ccdUpdateService.update(caseId,
                 data,
