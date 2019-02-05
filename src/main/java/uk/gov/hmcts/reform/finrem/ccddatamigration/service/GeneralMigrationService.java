@@ -44,6 +44,9 @@ public class GeneralMigrationService implements MigrationService {
     @Getter
     private String failedCases;
 
+    @Getter
+    private String migratedCases;
+
     @Value("${log.debug}")
     private boolean debugEnabled;
 
@@ -60,6 +63,7 @@ public class GeneralMigrationService implements MigrationService {
         CaseDetails aCase;
         try {
             aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
+            log.info("case data {} ", aCase.toString());
             if (aCase != null && aCase.getData() != null && !isEmpty(aCase.getData().get(SOLICITOR_ADDRESS_1))) {
                 updateOneCase(userToken, aCase);
             } else {
@@ -161,6 +165,7 @@ public class GeneralMigrationService implements MigrationService {
             if (debugEnabled) {
                 log.info(caseId + " updated!");
             }
+            updateMigratedCases(cd.getId());
         } catch (Exception e) {
             log.error("update failed for case with id [{}] with error [{}] ", cd.getId().toString(),
                         e.getMessage());
@@ -185,7 +190,11 @@ public class GeneralMigrationService implements MigrationService {
     }
 
     private void updateFailedCases(Long id) {
-        failedCases = nonNull(failedCases) ? (failedCases + "," + id) : id.toString();
+        failedCases = nonNull(this.failedCases) ? (this.failedCases + "," + id) : id.toString();
+    }
+
+    private void updateMigratedCases(Long id) {
+        migratedCases = nonNull(this.migratedCases) ? (this.migratedCases + "," + id) : id.toString();
     }
 
 }

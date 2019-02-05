@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.finrem.ccddatamigration.service;
 
-import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -19,6 +18,7 @@ import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.EMPTY_LIST;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
@@ -68,9 +68,10 @@ public class GeneralMigrationServiceTest {
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
         verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
-        assertThat(migrationService.getTotalNumberOfCases(), Is.is(1));
-        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(1));
+        assertThat(migrationService.getTotalNumberOfCases(), is(1));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
         assertNull(migrationService.getFailedCases());
+        assertThat(migrationService.getMigratedCases(), is("1111"));
     }
 
     @Test
@@ -82,9 +83,10 @@ public class GeneralMigrationServiceTest {
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
         verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
-        assertThat(migrationService.getTotalNumberOfCases(), Is.is(0));
-        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(0));
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
         assertNull(migrationService.getFailedCases());
+        assertNull(migrationService.getMigratedCases());
     }
 
     @Test
@@ -110,9 +112,10 @@ public class GeneralMigrationServiceTest {
                 USER_TOKEN,
                 EVENT_SUMMARY,
                 EVENT_DESCRIPTION);
-        assertThat(migrationService.getTotalNumberOfCases(), Is.is(1));
-        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(0));
-        assertThat(migrationService.getFailedCases(), Is.is("1111"));
+        assertThat(migrationService.getTotalNumberOfCases(), is(1));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertThat(migrationService.getFailedCases(), is("1111"));
+        assertNull(migrationService.getMigratedCases());
     }
 
     @Test
@@ -120,9 +123,10 @@ public class GeneralMigrationServiceTest {
         setupFields(true, true);
         setupMocks();
         migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
-        assertThat(migrationService.getTotalNumberOfCases(), Is.is(1));
-        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(1));
+        assertThat(migrationService.getTotalNumberOfCases(), is(1));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
         assertNull(migrationService.getFailedCases());
+        assertThat(migrationService.getMigratedCases(), is("1111"));
     }
 
     @Test
@@ -138,9 +142,10 @@ public class GeneralMigrationServiceTest {
                 EVENT_SUMMARY,
                 EVENT_DESCRIPTION)).thenThrow(new RuntimeException("Internal server error"));
         migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
-        assertThat(migrationService.getTotalNumberOfCases(), Is.is(3));
-        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(2));
-        assertThat(migrationService.getFailedCases(), Is.is("1113"));
+        assertThat(migrationService.getTotalNumberOfCases(), is(3));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(2));
+        assertThat(migrationService.getFailedCases(), is("1113"));
+        assertThat(migrationService.getMigratedCases(), is("1111,1112"));
     }
 
     @Test
@@ -161,9 +166,10 @@ public class GeneralMigrationServiceTest {
                 EVENT_SUMMARY,
                 EVENT_DESCRIPTION)).thenThrow(new RuntimeException("Internal server error"));
         migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
-        assertThat(migrationService.getTotalNumberOfCases(), Is.is(3));
-        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(1));
-        assertThat(migrationService.getFailedCases(), Is.is("1112,1113"));
+        assertThat(migrationService.getTotalNumberOfCases(), is(3));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
+        assertThat(migrationService.getFailedCases(), is("1112,1113"));
+        assertThat(migrationService.getMigratedCases(), is("1111"));
     }
 
     @Test
@@ -176,8 +182,9 @@ public class GeneralMigrationServiceTest {
         setupMocksForSearchCases(EMPTY_LIST, paginatedSearchMetadata);
 
         migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
-        assertThat(migrationService.getTotalNumberOfCases(), Is.is(0));
-        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(0));
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertNull(migrationService.getFailedCases());
         assertNull(migrationService.getFailedCases());
     }
 
@@ -191,8 +198,9 @@ public class GeneralMigrationServiceTest {
         setupMocksForSearchCases(EMPTY_LIST, paginatedSearchMetadata);
 
         migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
-        assertThat(migrationService.getTotalNumberOfCases(), Is.is(0));
-        assertThat(migrationService.getTotalMigrationsPerformed(), Is.is(0));
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertNull(migrationService.getFailedCases());
         assertNull(migrationService.getFailedCases());
     }
 

@@ -78,6 +78,9 @@ public class DataMigrationProcessor implements CommandLineRunner {
         } else {
             migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
         }
+        log.info("Migrated Cases {} ",
+                isNotBlank(migrationService.getMigratedCases()) ? migrationService.getMigratedCases() : "NONE");
+
         log.info("-----------------------------");
         log.info("Data migration completed");
         log.info("-----------------------------");

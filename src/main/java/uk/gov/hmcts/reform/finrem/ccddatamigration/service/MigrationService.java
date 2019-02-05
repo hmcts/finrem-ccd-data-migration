@@ -10,4 +10,6 @@ public interface MigrationService {
     int getTotalMigrationsPerformed();
 
     int getTotalNumberOfCases();
+
+    String getMigratedCases();
 }
