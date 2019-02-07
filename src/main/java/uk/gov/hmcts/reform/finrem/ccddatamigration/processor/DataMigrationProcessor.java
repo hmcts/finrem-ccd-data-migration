@@ -62,33 +62,39 @@ public class DataMigrationProcessor implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
-        String s2sToken = authTokenGenerator.generate();
-        String userId = idamUserService.retrieveUserDetails(userToken).getId();
-        if (debugEnabled) {
-            log.info("Start processing cases");
-            log.info("  userToken  : {}", userToken);
-            log.info("  s2sToken : {}", s2sToken);
-            log.info("  userId  : {}", userId);
+        try {
+            String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
+            String s2sToken = authTokenGenerator.generate();
+            String userId = idamUserService.retrieveUserDetails(userToken).getId();
+            if (debugEnabled) {
+                log.info("Start processing cases");
+                log.info("  userToken  : {}", userToken);
+                log.info("  s2sToken : {}", s2sToken);
+                log.info("  userId  : {}", userId);
+            }
+
+            if (isNotBlank(ccdCaseId)) {
+                log.info("migrate case, caseId  {}", ccdCaseId);
+                migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
+            } else {
+                migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
+            }
+            log.info("Migrated Cases {} ",
+                    isNotBlank(migrationService.getMigratedCases()) ? migrationService.getMigratedCases() : "NONE");
+
+            log.info("-----------------------------");
+            log.info("Data migration completed");
+            log.info("-----------------------------");
+            log.info("Total number of cases: " + migrationService.getTotalNumberOfCases());
+            log.info("Total migrations performed: " + migrationService.getTotalMigrationsPerformed());
+            log.info("-----------------------------");
+            log.info("Failed Cases {}",
+                    isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
+
+        } catch (Throwable e) {
+            log.error("Migration failed with the following reason :", e.getMessage());
+            e.printStackTrace();
         }
-
-        if (isNotBlank(ccdCaseId)) {
-            log.info("migrate case, caseId  {}", ccdCaseId);
-            migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
-        } else {
-            migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
-        }
-        log.info("Migrated Cases {} ",
-                isNotBlank(migrationService.getMigratedCases()) ? migrationService.getMigratedCases() : "NONE");
-
-        log.info("-----------------------------");
-        log.info("Data migration completed");
-        log.info("-----------------------------");
-        log.info("Total number of cases: " + migrationService.getTotalNumberOfCases());
-        log.info("Total migrations performed: " + migrationService.getTotalMigrationsPerformed());
-        log.info("-----------------------------");
-        log.info("Failed Cases {}",
-                isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
-
     }
+
 }

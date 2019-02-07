@@ -78,7 +78,6 @@ public class GeneralMigrationService implements MigrationService {
     public void processAllTheCases(String userToken, String s2sToken, String userId,
                                    String jurisdictionId, String caseType) {
         Map<String, String> searchCriteria = new HashMap<>();
-        //searchCriteria.put(SOLICITOR_ADDRESS_1, "solicitorAddress.AddressLine1");
         int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria);
 
         if (dryRun) {
