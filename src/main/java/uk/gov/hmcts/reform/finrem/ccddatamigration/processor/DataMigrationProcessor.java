@@ -63,13 +63,19 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Override
     public void run(String... args) {
         try {
-            String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
-            String s2sToken = authTokenGenerator.generate();
-            String userId = idamUserService.retrieveUserDetails(userToken).getId();
             if (debugEnabled) {
                 log.info("Start processing cases");
+            }
+            String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
+            if (debugEnabled) {
                 log.info("  userToken  : {}", userToken);
+            }
+            String s2sToken = authTokenGenerator.generate();
+            if (debugEnabled) {
                 log.info("  s2sToken : {}", s2sToken);
+            }
+            String userId = idamUserService.retrieveUserDetails(userToken).getId();
+            if (debugEnabled) {
                 log.info("  userId  : {}", userId);
             }
 
