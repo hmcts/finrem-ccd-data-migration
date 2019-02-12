@@ -23,12 +23,6 @@ public class IdamUtils implements IdamUserClient {
     @Value("${client.id}")
     private String clientId;
 
-    @Value("${http.connect.timeout}")
-    private String connectionTimeout;
-
-    @Value("${http.connect.request.timeout}")
-    private String connectionReadTimeout;
-
     public String generateUserTokenWithNoRoles(String username, String password) {
         String userLoginDetails = String.join(":", username, password);
         final String authHeader = "Basic " + new String(Base64.getEncoder().encode((userLoginDetails).getBytes()));
