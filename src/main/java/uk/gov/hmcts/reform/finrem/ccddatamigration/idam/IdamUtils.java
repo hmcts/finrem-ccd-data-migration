@@ -20,6 +20,15 @@ public class IdamUtils implements IdamUserClient {
     @Value("${idam.api.secret}")
     private String idamSecret;
 
+    @Value("${client.id}")
+    private String clientId;
+
+    @Value("${http.connect.timeout}")
+    private String connectionTimeout;
+
+    @Value("${http.connect.request.timeout}")
+    private String connectionReadTimeout;
+
     public String generateUserTokenWithNoRoles(String username, String password) {
         String userLoginDetails = String.join(":", username, password);
         final String authHeader = "Basic " + new String(Base64.getEncoder().encode((userLoginDetails).getBytes()));
@@ -44,14 +53,14 @@ public class IdamUtils implements IdamUserClient {
     private String idamCodeUrl() {
         return idamUserBaseUrl + "/oauth2/authorize"
                 + "?response_type=code"
-                + "&client_id=finrem"
+                + "&client_id=" + clientId
                 + "&redirect_uri=" + idamRedirectUri;
     }
 
     private String idamTokenUrl(String code) {
         return idamUserBaseUrl + "/oauth2/token"
                 + "?code=" + code
-                + "&client_id=finrem"
+                + "&client_id=" + clientId
                 + "&client_secret=" + idamSecret
                 + "&redirect_uri=" + idamRedirectUri
                 + "&grant_type=authorization_code";

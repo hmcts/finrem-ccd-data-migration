@@ -47,6 +47,9 @@ public class IdamUtilsTest {
         ReflectionUtils.makeAccessible(field2);
         ReflectionUtils.setField(field2, underTest, "AAAAAAAAAAAAAAAA");
 
+        Field field3 = ReflectionUtils.findField(IdamUtils.class, "clientId");
+        ReflectionUtils.makeAccessible(field3);
+        ReflectionUtils.setField(field3, underTest, "finrem");
 
     }
 
