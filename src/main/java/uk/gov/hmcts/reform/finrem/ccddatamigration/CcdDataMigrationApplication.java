@@ -11,11 +11,12 @@ import uk.gov.hmcts.reform.authorisation.healthcheck.ServiceAuthHealthIndicator;
 public class CcdDataMigrationApplication {
 
     public static void main(String[] args) {
-//        System.setProperty("http.proxyHost", "proxyout.reform.hmcts.net");
-//        System.setProperty("http.proxyPort", "8080");
-//        System.setProperty("https.proxyHost", "proxyout.reform.hmcts.net");
-//        System.setProperty("https.proxyPort", "8080");
 
-        SpringApplication.run(CcdDataMigrationApplication.class, args);
+        System.setProperty("http.proxyHost", "proxyout.reform.hmcts.net");
+        System.setProperty("http.proxyPort", "8080");
+        System.setProperty("https.proxyHost", "proxyout.reform.hmcts.net");
+        System.setProperty("https.proxyPort", "8080");
+
+        SpringApplication.run(CcdDataMigrationApplication.class, args).close();
     }
 }

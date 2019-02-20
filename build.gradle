@@ -31,7 +31,7 @@ version = '1.0.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-mainClassName = 'uk.gov.hmcts.reform.finrem.ccddatamigration.CddDataMigrationApplication'
+mainClassName = 'uk.gov.hmcts.reform.finrem.ccddatamigration.CcdDataMigrationApplication'
 
 compileJava {
     options.compilerArgs << '-parameters' << '-Xlint:deprecation'
@@ -107,8 +107,6 @@ dependencies {
                 exclude group: 'io.reactivex', module: 'rxnetty-servo'
             }
     compile group: 'uk.gov.hmcts.reform', name: 'java-logging', version: versions.reformsJavaLogging
-    compile group: 'uk.gov.hmcts.reform', name: 'java-logging-appinsights', version: versions.reformsJavaLogging
-    compile group: 'uk.gov.hmcts.reform', name: 'java-logging-spring', version: versions.reformsJavaLogging
     compile group: 'uk.gov.hmcts.reform', name: 'java-logging-httpcomponents', version: versions.reformsJavaLogging
     compile group: 'uk.gov.hmcts.reform', name: 'http-proxy-spring-boot-autoconfigure', version: versions.reformSpringBootAutoConfigure
     compile (group: 'uk.gov.hmcts.reform', name:'service-auth-provider-client', version: versions.serviceTokenGenerator)

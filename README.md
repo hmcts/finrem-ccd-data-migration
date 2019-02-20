@@ -21,18 +21,36 @@ To build project please execute the following command:
     ./gradlew build
 ```
 
+** Make sure you are connected to VPN and No Proxy active, as the application has the in-built to set the proxy.
+
+proxyout.reform.hmcts.net:8080
+
+- To access to aat, the proxy must be set on http / https need to proxyout.reform.hmcts.net:8080 which is in CCDDataMigrationApplication.java
+
+
 ### Running
 
-- To access to aat, the proxy must be set on http / https need to proxyout.reform.hmcts.net:8080
 - A Case Work user for aat is required
 
 in ./build/libs locate finrem-1.0.0-SNAPSHOT.jar and run it with this commande line
 
-In read mode only (default mode):
-java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -jar finrem-1.0.0-SNAPSHOT.jar
+In Dryrun mode(default mode):
 
-In read and update mode:
-java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.update=true -jar finrem-1.0.0-SNAPSHOT.jar
+`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
+
+In Complete mode:
+
+`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.dryrun=false -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
+
+To run for a single case:
+
+`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.dryrun=false  -Dccd.caseId="caseId" -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
+
+
+If you want to customize connection time out and socket timeout, append the below to the command
+
+```-Dhttp.connect.timeout=60000 -Dhttp.connect.request.timeout=60000```
+
 WARNING: THIS WILL UPDATE ALL THE FR CASES IN CCD IN A FEW MINUTES!!!
 
 ### How to twist the application
@@ -41,7 +59,7 @@ The majority of the twist could be obtain by hacking one of these files:
  
 - DataMigrationProcessor.java
 - GeneralMigrationService.java
-- application.yml
+- application.properties
 
 
 
