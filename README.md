@@ -34,22 +34,32 @@ proxyout.reform.hmcts.net:8080
 
 in ./build/libs locate finrem-1.0.0-SNAPSHOT.jar and run it with this commande line
 
-In Dryrun mode(default mode):
+** Ensure all the local dockers are running and healthy.
 
-`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
+In Dryrun mode(default mode) for local:
 
-In Complete mode:
+`java -jar ./build/libs/finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar --DRYRUN=true`
 
-`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.dryrun=false -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
+In Dryrun mode(default mode) for demo:
+
+`java -jar ./build/libs/finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar --SPRING_PROFILE=demo --OAUTH2_CLIENT_FINREM=<idam_secret> --TOTP_SECRET=<<s2s_secret>> --USER_NAME=<<username>> --PASSWORD=<<password>> --DRYRUN=true`
+
+In Complete mode (demo):
+
+`java -jar ./build/libs/finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar --SPRING_PROFILE=demo --OAUTH2_CLIENT_FINREM=<idam_secret> --TOTP_SECRET=<<s2s_secret>> --USER_NAME=<<username>> --PASSWORD=<<password>> --DRYRUN=false`
 
 To run for a single case:
 
-`java -Didam.userName="caseworkeraccount" -Didam.userPassword="caseworkerpassword" -Dccd.dryrun=false  -Dccd.caseId="caseId" -jar finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar`
+`java -jar ./build/libs/finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar --SPRING_PROFILE=demo --OAUTH2_CLIENT_FINREM=<<idam_secret>> --TOTP_SECRET=<<s2s_secret>> --USER_NAME=<<username>> --PASSWORD=<<password>> --DRYRUN=true --CASEID=<<CaseId>>`
 
 
 If you want to customize connection time out and socket timeout, append the below to the command
 
-```-Dhttp.connect.timeout=60000 -Dhttp.connect.request.timeout=60000```
+```--HTTP_READ_TIMEOUT=100 -Dhttp.connect.request.timeout=60000```
+
+To enable debug mode,
+
+``` --DEBUG=true ```
 
 WARNING: THIS WILL UPDATE ALL THE FR CASES IN CCD IN A FEW MINUTES!!!
 
