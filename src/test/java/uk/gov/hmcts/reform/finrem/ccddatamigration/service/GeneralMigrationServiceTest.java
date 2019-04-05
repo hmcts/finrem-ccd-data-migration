@@ -38,7 +38,7 @@ public class GeneralMigrationServiceTest {
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
-    private static final String SOLICITOR_ADDRESS_1 = "solicitorAddress1";
+    private static final String DIVORCE_CASE_NUMBER = "divorceCaseNumber";
 
     @InjectMocks
     private GeneralMigrationService migrationService;
@@ -59,7 +59,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessASingleCaseAndMigrationIsSuccessful() {
         Map<String, Object> data = new HashMap<>();
-        data.put(SOLICITOR_ADDRESS_1, "188 City View");
+        data.put(DIVORCE_CASE_NUMBER, "Div1");
         CaseDetails caseDetails = CaseDetails.builder()
                 .id(1111L)
                 .data(data)
@@ -92,7 +92,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessASingleCaseAndMigrationIsFailed() {
         Map<String, Object> data = new HashMap<>();
-        data.put(SOLICITOR_ADDRESS_1, "188 City View");
+        data.put(DIVORCE_CASE_NUMBER, "Div1");
         CaseDetails caseDetails = CaseDetails.builder()
                 .id(1111L)
                 .data(data)
@@ -205,9 +205,9 @@ public class GeneralMigrationServiceTest {
     }
 
     private void setupMocks() {
-        caseDetails1 = createCaseDetails(1111L, "188 cityView");
-        caseDetails2 = createCaseDetails(1112L, "189 cityView");
-        caseDetails3 = createCaseDetails(1113L, "186 cityView");
+        caseDetails1 = createCaseDetails(1111L, "Div1");
+        caseDetails2 = createCaseDetails(1112L, "Div2");
+        caseDetails3 = createCaseDetails(1113L, "Div3");
 
         PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
         paginatedSearchMetadata.setTotalPagesCount(1);
@@ -255,9 +255,9 @@ public class GeneralMigrationServiceTest {
                 .thenReturn(caseDetails);
     }
 
-    private CaseDetails createCaseDetails(long id, String solicitorAddress1) {
+    private CaseDetails createCaseDetails(long id, String divorceCaseNumber) {
         Map<String, Object> data1 = new HashMap<>();
-        data1.put(SOLICITOR_ADDRESS_1, solicitorAddress1);
+        data1.put(DIVORCE_CASE_NUMBER, divorceCaseNumber);
         return CaseDetails.builder()
                 .id(id)
                 .data(data1)

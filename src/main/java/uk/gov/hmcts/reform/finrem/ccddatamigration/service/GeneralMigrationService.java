@@ -27,7 +27,7 @@ public class GeneralMigrationService implements MigrationService {
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
-    private static final String SOLICITOR_ADDRESS_1 = "solicitorAddress1";
+    private static final String AMOUNT_TO_PAY = "amountToPay";
 
     @Getter
     private int totalMigrationsPerformed;
@@ -55,7 +55,7 @@ public class GeneralMigrationService implements MigrationService {
 
     private static Predicate<CaseDetails> accepts() {
         return caseDetails -> caseDetails != null && caseDetails.getData() != null
-                && !isEmpty(caseDetails.getData().get(SOLICITOR_ADDRESS_1));
+                && isEmpty(caseDetails.getData().get(AMOUNT_TO_PAY));
     }
 
     @Override
@@ -63,11 +63,11 @@ public class GeneralMigrationService implements MigrationService {
         CaseDetails aCase;
         try {
             aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
-            log.info("case data {} ", aCase.toString());
-            if (aCase != null && aCase.getData() != null && !isEmpty(aCase.getData().get(SOLICITOR_ADDRESS_1))) {
+            log.info("case data {} ", aCase);
+            if (aCase != null && aCase.getData() != null && isEmpty(aCase.getData().get(AMOUNT_TO_PAY))) {
                 updateOneCase(userToken, aCase);
             } else {
-                log.info("Case {} doesn't have redundant fields", aCase.getId());
+                log.info("Case {} already migrated and has {} field.", AMOUNT_TO_PAY, aCase.getId());
             }
         } catch (Exception ex) {
             log.error("case Id {} not found, {}", ccdCaseId, ex.getMessage());
