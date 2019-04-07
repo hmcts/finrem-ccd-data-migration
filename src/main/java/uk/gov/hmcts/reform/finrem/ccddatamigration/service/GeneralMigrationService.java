@@ -28,6 +28,8 @@ public class GeneralMigrationService implements MigrationService {
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
     private static final String AMOUNT_TO_PAY = "amountToPay";
+    private static final String HELP_WITH_FEES_QUESTION = "helpWithFeesQuestion";
+
 
     @Getter
     private int totalMigrationsPerformed;
@@ -55,7 +57,8 @@ public class GeneralMigrationService implements MigrationService {
 
     private static Predicate<CaseDetails> accepts() {
         return caseDetails -> caseDetails != null && caseDetails.getData() != null
-                && isEmpty(caseDetails.getData().get(AMOUNT_TO_PAY));
+                && isEmpty(caseDetails.getData().get(AMOUNT_TO_PAY))
+                && !isEmpty(caseDetails.getData().get(HELP_WITH_FEES_QUESTION));
     }
 
     @Override
@@ -64,7 +67,8 @@ public class GeneralMigrationService implements MigrationService {
         try {
             aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
             log.info("case data {} ", aCase);
-            if (aCase != null && aCase.getData() != null && isEmpty(aCase.getData().get(AMOUNT_TO_PAY))) {
+            if (aCase != null && aCase.getData() != null && isEmpty(aCase.getData().get(AMOUNT_TO_PAY))
+                    && !isEmpty(aCase.getData().get(HELP_WITH_FEES_QUESTION))) {
                 updateOneCase(userToken, aCase);
             } else {
                 log.info("Case {} already migrated and has {} field.", AMOUNT_TO_PAY, aCase.getId());

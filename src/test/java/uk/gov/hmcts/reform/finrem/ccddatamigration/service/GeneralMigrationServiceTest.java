@@ -38,7 +38,7 @@ public class GeneralMigrationServiceTest {
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
-    private static final String DIVORCE_CASE_NUMBER = "divorceCaseNumber";
+    private static final String HELP_WITH_FEES_QUESTION = "helpWithFeesQuestion";
 
     @InjectMocks
     private GeneralMigrationService migrationService;
@@ -59,7 +59,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessASingleCaseAndMigrationIsSuccessful() {
         Map<String, Object> data = new HashMap<>();
-        data.put(DIVORCE_CASE_NUMBER, "Div1");
+        data.put(HELP_WITH_FEES_QUESTION, "Yes");
         CaseDetails caseDetails = CaseDetails.builder()
                 .id(1111L)
                 .data(data)
@@ -92,7 +92,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessASingleCaseAndMigrationIsFailed() {
         Map<String, Object> data = new HashMap<>();
-        data.put(DIVORCE_CASE_NUMBER, "Div1");
+        data.put(HELP_WITH_FEES_QUESTION, "Yes");
         CaseDetails caseDetails = CaseDetails.builder()
                 .id(1111L)
                 .data(data)
@@ -255,9 +255,9 @@ public class GeneralMigrationServiceTest {
                 .thenReturn(caseDetails);
     }
 
-    private CaseDetails createCaseDetails(long id, String divorceCaseNumber) {
+    private CaseDetails createCaseDetails(long id, String hwfQuestion) {
         Map<String, Object> data1 = new HashMap<>();
-        data1.put(DIVORCE_CASE_NUMBER, divorceCaseNumber);
+        data1.put(HELP_WITH_FEES_QUESTION, hwfQuestion);
         return CaseDetails.builder()
                 .id(id)
                 .data(data1)
