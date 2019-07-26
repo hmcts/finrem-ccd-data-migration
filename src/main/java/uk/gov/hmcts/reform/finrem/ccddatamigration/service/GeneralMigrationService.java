@@ -27,8 +27,7 @@ public class GeneralMigrationService implements MigrationService {
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
-    private static final String AMOUNT_TO_PAY = "amountToPay";
-    private static final String HELP_WITH_FEES_QUESTION = "helpWithFeesQuestion";
+    private static final String STATE = "state";
 
 
     @Getter
@@ -57,8 +56,12 @@ public class GeneralMigrationService implements MigrationService {
 
     private static Predicate<CaseDetails> accepts() {
         return caseDetails -> caseDetails != null && caseDetails.getData() != null
-                && isEmpty(caseDetails.getData().get(AMOUNT_TO_PAY))
-                && !isEmpty(caseDetails.getData().get(HELP_WITH_FEES_QUESTION));
+                && !isEmpty(caseDetails.getData().get(STATE));
+    }
+
+    private static boolean isCandidateForMigration(CaseDetails aCase) {
+        return aCase != null && aCase.getData() != null
+                && !isEmpty(aCase.getData().get(STATE));
     }
 
     @Override
@@ -67,25 +70,27 @@ public class GeneralMigrationService implements MigrationService {
         try {
             aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
             log.info("case data {} ", aCase);
-            if (aCase != null && aCase.getData() != null && isEmpty(aCase.getData().get(AMOUNT_TO_PAY))
-                    && !isEmpty(aCase.getData().get(HELP_WITH_FEES_QUESTION))) {
-                updateOneCase(userToken, aCase);
+            if (isCandidateForMigration(aCase)) {
+                String caseTypeId = aCase.getCaseTypeId();
+                updateOneCase(userToken, aCase, caseTypeId);
             } else {
-                log.info("Case {} already migrated and has {} field.", AMOUNT_TO_PAY, aCase.getId());
+                log.info("Case {} doesn't has {} field.", aCase.getId(), STATE);
             }
         } catch (Exception ex) {
             log.error("case Id {} not found, {}", ccdCaseId, ex.getMessage());
         }
     }
 
+
     @Override
     public void processAllTheCases(String userToken, String s2sToken, String userId,
                                    String jurisdictionId, String caseType) {
         Map<String, String> searchCriteria = new HashMap<>();
         int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria);
+        log.info("Number of pages : {}", numberOfPages);
 
         if (dryRun) {
-            log.info("dryRun for one case ...");
+            log.info("caseType {}  and dryRun for one case ...", caseType);
             dryRunWithOneCase(userToken, s2sToken, userId, jurisdictionId, caseType, numberOfPages);
 
         } else {
@@ -124,7 +129,7 @@ public class GeneralMigrationService implements MigrationService {
             if (casesForPage.size() > 0) {
                 found = true;
                 log.info("Migrating Case Id {} for the dryRun", casesForPage.get(0).getId());
-                updateOneCase(userToken, casesForPage.get(0));
+                updateOneCase(userToken, casesForPage.get(0), caseType);
             }
         }
     }
@@ -153,31 +158,31 @@ public class GeneralMigrationService implements MigrationService {
         getCasesForPage(userToken, s2sToken, userId, jurisdictionId, caseType, pageNumber)
                 .stream()
                 .filter(accepts())
-                .forEach(cd -> updateOneCase(userToken, cd));
+                .forEach(cd -> updateOneCase(userToken, cd, caseType));
     }
 
 
-    private void updateOneCase(String authorisation, CaseDetails cd) {
+    private void updateOneCase(String authorisation, CaseDetails cd, String caseType) {
         totalNumberOfCases++;
         String caseId = cd.getId().toString();
         if (debugEnabled) {
             log.info("updating case with id :" + caseId);
         }
         try {
-            updateCase(authorisation, cd);
+            updateCase(authorisation, cd, caseType);
             if (debugEnabled) {
                 log.info(caseId + " updated!");
             }
             updateMigratedCases(cd.getId());
         } catch (Exception e) {
             log.error("update failed for case with id [{}] with error [{}] ", cd.getId().toString(),
-                        e.getMessage());
+                    e.getMessage());
 
             updateFailedCases(cd.getId());
         }
     }
 
-    private void updateCase(String authorisation, CaseDetails cd) {
+    private void updateCase(String authorisation, CaseDetails cd, String caseType) {
         String caseId = cd.getId().toString();
         Object data = cd.getData();
         if (debugEnabled) {
@@ -188,7 +193,8 @@ public class GeneralMigrationService implements MigrationService {
                 EVENT_ID,
                 authorisation,
                 EVENT_SUMMARY,
-                EVENT_DESCRIPTION);
+                EVENT_DESCRIPTION,
+                caseType);
         totalMigrationsPerformed++;
     }
 

@@ -13,9 +13,6 @@ class BaseCcdCaseService {
     @Value("${ccd.jurisdictionid}")
     String jurisdictionId;
 
-    @Value("${ccd.casetype}")
-    String caseType;
-
     @Value("${ccd.eventid.create}")
     String createEventId;
 

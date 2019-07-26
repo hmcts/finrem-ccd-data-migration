@@ -13,6 +13,8 @@ import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserClient;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserService;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.service.MigrationService;
 
+import java.util.List;
+
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Slf4j
@@ -30,8 +32,8 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Value("${ccd.jurisdictionid}")
     private String jurisdictionId;
 
-    @Value("${ccd.casetype}")
-    private String caseType;
+    @Value("#{'${ccd.casetypes}'.split(',')}")
+    private List<String> caseTypes;
 
     @Value("${ccd.caseId}")
     private String ccdCaseId;
@@ -83,7 +85,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
                 log.info("migrate case, caseId  {}", ccdCaseId);
                 migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
             } else {
-                migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
+                caseTypes.forEach(caseType -> migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType));
             }
             log.info("Migrated Cases {} ",
                     isNotBlank(migrationService.getMigratedCases()) ? migrationService.getMigratedCases() : "NONE");
