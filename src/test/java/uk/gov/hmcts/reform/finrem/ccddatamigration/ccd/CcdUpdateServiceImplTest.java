@@ -18,6 +18,7 @@ import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserService;
 
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -26,7 +27,8 @@ import static org.mockito.Mockito.when;
 public class CcdUpdateServiceImplTest {
 
     private static final String EVENT_ID = "FR_migrateCase";
-    private static final String CASE_TYPE = "FinancialRemedyMVP2";
+    private static final String CASE_TYPE_CONSENTED = "FinancialRemedyMVP2";
+    private static final String CASE_TYPE_CONTESTED = "FinancialRemedyContested";
     private static final String CASE_ID = "123456789";
     private static final String JURISDICTION_ID = "divorce";
     private static final String USER_ID = "30";
@@ -54,11 +56,6 @@ public class CcdUpdateServiceImplTest {
         Field field = ReflectionUtils.findField(CcdUpdateServiceImpl.class, "jurisdictionId");
         ReflectionUtils.makeAccessible(field);
         ReflectionUtils.setField(field, underTest, JURISDICTION_ID);
-
-
-        Field caseTypeField = ReflectionUtils.findField(CcdUpdateServiceImpl.class, "caseType");
-        ReflectionUtils.makeAccessible(caseTypeField);
-        ReflectionUtils.setField(caseTypeField, underTest, CASE_TYPE);
 
         Field createEventIdField = ReflectionUtils.findField(CcdUpdateServiceImpl.class, "createEventId");
         ReflectionUtils.makeAccessible(createEventIdField);
@@ -88,7 +85,7 @@ public class CcdUpdateServiceImplTest {
 
         //when
         CaseDetails update = underTest.update(CASE_ID, data, EVENT_ID, AUTH_TOKEN,
-                EVENT_SUMMARY, EVENT_DESC);
+                EVENT_SUMMARY, EVENT_DESC, CASE_TYPE_CONSENTED);
         //then
         assertThat(update.getId(), is(Long.parseLong(CASE_ID)));
         assertThat(update.getData().get("solicitorEmail"), is("Padmaja.Ramisetti@hmcts.net"));
@@ -110,7 +107,7 @@ public class CcdUpdateServiceImplTest {
                 .build();
 
         when(coreCaseDataApi.startEventForCaseWorker(AUTH_TOKEN, AUTH_TOKEN, "30",
-                JURISDICTION_ID, CASE_TYPE, CASE_ID, EVENT_ID))
+                JURISDICTION_ID, CASE_TYPE_CONSENTED, CASE_ID, EVENT_ID))
                 .thenReturn(startEventResponse);
 
         CaseDataContent caseDataContent = CaseDataContent.builder()
@@ -124,11 +121,12 @@ public class CcdUpdateServiceImplTest {
                 .ignoreWarning(false)
                 .build();
 
-        CaseDetails caseDetails = CaseDetails.builder()
+        CaseDetails caseDetailsConsented = CaseDetails.builder()
                 .id(123456789L)
+                .caseTypeId(CASE_TYPE_CONSENTED)
                 .data(data)
                 .build();
         when(coreCaseDataApi.submitEventForCaseWorker(AUTH_TOKEN, AUTH_TOKEN, USER_ID, JURISDICTION_ID,
-                CASE_TYPE, CASE_ID, true, caseDataContent)).thenReturn(caseDetails);
+                CASE_TYPE_CONSENTED, CASE_ID, true, caseDataContent)).thenReturn(caseDetailsConsented);
     }
 }

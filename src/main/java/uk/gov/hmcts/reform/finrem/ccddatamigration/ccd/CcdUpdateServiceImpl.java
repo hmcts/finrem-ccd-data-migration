@@ -12,7 +12,7 @@ public class CcdUpdateServiceImpl extends BaseCcdCaseService implements CcdUpdat
 
     @Override
     public CaseDetails update(String caseId, Object data, String eventId, String authorisation,
-                              String eventSummary, String eventDescription) {
+                              String eventSummary, String eventDescription, String caseType) {
         UserDetails userDetails = getUserDetails(authorisation);
 
         StartEventResponse startEventResponse = coreCaseDataApi.startEventForCaseWorker(
