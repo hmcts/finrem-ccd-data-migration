@@ -80,6 +80,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
             if (debugEnabled) {
                 log.info("  userId  : {}", userId);
             }
+            log.info("Case Id {}", ccdCaseId);
 
             if (isNotBlank(ccdCaseId)) {
                 log.info("migrate case, caseId  {}", ccdCaseId);
