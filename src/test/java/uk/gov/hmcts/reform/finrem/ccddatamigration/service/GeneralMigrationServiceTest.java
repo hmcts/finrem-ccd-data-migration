@@ -58,7 +58,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessASingleCaseAndMigrationIsSuccessful() {
         Map<String, Object> data = new HashMap<>();
-        data.put("state", "dummyState");
+        data.put("judgeAllocated", "Option1");
         CaseDetails caseDetails = CaseDetails.builder()
                 .id(1111L)
                 .caseTypeId(CASE_TYPE)
@@ -93,7 +93,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessASingleCaseAndMigrationIsFailed() {
         Map<String, Object> data = new HashMap<>();
-        data.put("state", "dummyState");
+        data.put("judgeAllocated", "Option1");
         CaseDetails caseDetails = CaseDetails.builder()
                 .id(1111L)
                 .caseTypeId(CASE_TYPE)
@@ -221,10 +221,10 @@ public class GeneralMigrationServiceTest {
         assertNull(migrationService.getFailedCases());
     }
 
-    private void setupMocks(boolean addState) {
-        caseDetails1 = createCaseDetails(1111L, CASE_TYPE, addState);
-        caseDetails2 = createCaseDetails(1112L, CASE_TYPE, addState);
-        caseDetails3 = createCaseDetails(1113L, CASE_TYPE, addState);
+    private void setupMocks(boolean judgeAllocated) {
+        caseDetails1 = createCaseDetails(1111L, CASE_TYPE, judgeAllocated);
+        caseDetails2 = createCaseDetails(1112L, CASE_TYPE, judgeAllocated);
+        caseDetails3 = createCaseDetails(1113L, CASE_TYPE, judgeAllocated);
 
         PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
         paginatedSearchMetadata.setTotalPagesCount(1);
@@ -272,10 +272,10 @@ public class GeneralMigrationServiceTest {
                 .thenReturn(caseDetails);
     }
 
-    private CaseDetails createCaseDetails(long id, String caseType, boolean addState) {
+    private CaseDetails createCaseDetails(long id, String caseType, boolean judgeAllocated) {
         Map<String, Object> data1 = new HashMap<>();
-        if (addState) {
-            data1.put("state", "dummyState");
+        if (judgeAllocated) {
+            data1.put("judgeAllocated", "Option1");
         }
         return CaseDetails.builder()
                 .id(id)

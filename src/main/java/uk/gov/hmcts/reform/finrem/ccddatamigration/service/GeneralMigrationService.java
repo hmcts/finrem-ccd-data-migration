@@ -80,7 +80,7 @@ public class GeneralMigrationService implements MigrationService {
                 String caseTypeId = aCase.getCaseTypeId();
                 updateOneCase(userToken, aCase, caseTypeId);
             } else {
-                log.info("Case {} doesn't has {} field.", aCase.getId(), STATE);
+                log.info("Case {} doesn't has {} field.", aCase.getId(), JUDGE_ALLOCATED);
             }
         } catch (Exception ex) {
             log.error("case Id {} not found, {}", ccdCaseId, ex.getMessage());
