@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import uk.gov.hmcts.reform.ccd.client.CoreCaseDataApi;
 import uk.gov.hmcts.reform.ccd.client.model.CaseDetails;
 import uk.gov.hmcts.reform.ccd.client.model.PaginatedSearchMetadata;
@@ -27,8 +28,7 @@ public class GeneralMigrationService implements MigrationService {
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
-    private static final String STATE = "state";
-
+    private static final String JUDGE_ALLOCATED = "judgeAllocated";
 
     @Getter
     private int totalMigrationsPerformed;
@@ -56,12 +56,18 @@ public class GeneralMigrationService implements MigrationService {
 
     private static Predicate<CaseDetails> accepts() {
         return caseDetails -> caseDetails != null && caseDetails.getData() != null
-                && !isEmpty(caseDetails.getData().get(STATE));
+                && !isEmpty(caseDetails.getData().get(JUDGE_ALLOCATED));
     }
 
     private static boolean isCandidateForMigration(CaseDetails aCase) {
-        return aCase != null && aCase.getData() != null
-                && !isEmpty(aCase.getData().get(STATE));
+        Object judgeAllocated = aCase.getData().get(JUDGE_ALLOCATED);
+        if (nonNull(judgeAllocated) && !ObjectUtils.isEmpty(judgeAllocated)) {
+            if (judgeAllocated instanceof String) {
+                return true;
+            }
+            return false;
+        }
+        return false;
     }
 
     @Override
