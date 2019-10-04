@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
-import static org.springframework.util.StringUtils.isEmpty;
-
 
 @Slf4j
 @Component("generalMigrationService")
@@ -27,8 +25,6 @@ public class GeneralMigrationService implements MigrationService {
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
-    private static final String STATE = "state";
-
 
     @Getter
     private int totalMigrationsPerformed;
@@ -55,38 +51,35 @@ public class GeneralMigrationService implements MigrationService {
     private boolean dryRun;
 
     private static Predicate<CaseDetails> accepts() {
-        return caseDetails -> caseDetails != null && caseDetails.getData() != null
-                && !isEmpty(caseDetails.getData().get(STATE));
+        return caseDetails -> caseDetails != null && caseDetails.getData() != null;
     }
 
-    private static boolean isCandidateForMigration(CaseDetails aCase) {
-        return aCase != null && aCase.getData() != null
-                && !isEmpty(aCase.getData().get(STATE));
+    private static boolean isCandidateForMigration(final CaseDetails aCase) {
+        return aCase != null && aCase.getData() != null;
     }
 
     @Override
-    public void processSingleCase(String userToken, String s2sToken, String ccdCaseId) {
-        CaseDetails aCase;
+    public void processSingleCase(final String userToken, final String s2sToken, final String ccdCaseId) {
+        final CaseDetails aCase;
         try {
             aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
             log.info("case data {} ", aCase);
             if (isCandidateForMigration(aCase)) {
-                String caseTypeId = aCase.getCaseTypeId();
+                final String caseTypeId = aCase.getCaseTypeId();
                 updateOneCase(userToken, aCase, caseTypeId);
             } else {
-                log.info("Case {} doesn't has {} field.", aCase.getId(), STATE);
+                log.info("Case {} doesn't has data.", aCase.getId());
             }
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             log.error("case Id {} not found, {}", ccdCaseId, ex.getMessage());
         }
     }
 
-
     @Override
-    public void processAllTheCases(String userToken, String s2sToken, String userId,
-                                   String jurisdictionId, String caseType) {
-        Map<String, String> searchCriteria = new HashMap<>();
-        int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria);
+    public void processAllTheCases(final String userToken, final String s2sToken, final String userId,
+                                   final String jurisdictionId, final String caseType) {
+        final Map<String, String> searchCriteria = new HashMap<>();
+        final int numberOfPages = requestNumberOfPage(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria);
         log.info("Number of pages : {}", numberOfPages);
 
         if (dryRun) {
@@ -101,13 +94,13 @@ public class GeneralMigrationService implements MigrationService {
         }
     }
 
-    private int requestNumberOfPage(String authorisation,
-                                    String serviceAuthorisation,
-                                    String userId,
-                                    String jurisdictionId,
-                                    String caseType,
-                                    Map<String, String> searchCriteria) {
-        PaginatedSearchMetadata paginationInfoForSearchForCaseworkers = ccdApi.getPaginationInfoForSearchForCaseworkers(
+    private int requestNumberOfPage(final String authorisation,
+                                    final String serviceAuthorisation,
+                                    final String userId,
+                                    final String jurisdictionId,
+                                    final String caseType,
+                                    final Map<String, String> searchCriteria) {
+        final PaginatedSearchMetadata paginationInfoForSearchForCaseworkers = ccdApi.getPaginationInfoForSearchForCaseworkers(
                 authorisation,
                 serviceAuthorisation,
                 userId,
@@ -120,11 +113,11 @@ public class GeneralMigrationService implements MigrationService {
         return paginationInfoForSearchForCaseworkers.getTotalPagesCount();
     }
 
-    private void dryRunWithOneCase(String userToken, String s2sToken, String userId,
-                                   String jurisdictionId, String caseType, int numberOfPages) {
+    private void dryRunWithOneCase(final String userToken, final String s2sToken, final String userId,
+                                   final String jurisdictionId, final String caseType, final int numberOfPages) {
         boolean found = false;
         for (int i = 1; i <= numberOfPages && !found; i++) {
-            List<CaseDetails> casesForPage = getCasesForPage(userToken, s2sToken, userId,
+            final List<CaseDetails> casesForPage = getCasesForPage(userToken, s2sToken, userId,
                     jurisdictionId, caseType, i);
             if (casesForPage.size() > 0) {
                 found = true;
@@ -134,37 +127,36 @@ public class GeneralMigrationService implements MigrationService {
         }
     }
 
-    private List<CaseDetails> getCasesForPage(String userToken,
-                                              String s2sToken,
-                                              String userId,
-                                              String jurisdictionId,
-                                              String caseType,
-                                              int pageNumber) {
-        Map<String, String> searchCriteria = new HashMap<>();
+    private List<CaseDetails> getCasesForPage(final String userToken,
+                                              final String s2sToken,
+                                              final String userId,
+                                              final String jurisdictionId,
+                                              final String caseType,
+                                              final int pageNumber) {
+        final Map<String, String> searchCriteria = new HashMap<>();
         searchCriteria.put("page", String.valueOf(pageNumber));
         return ccdApi.searchForCaseworker(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria)
-                .stream()
-                .filter(accepts())
-                .collect(Collectors.toList());
+                       .stream()
+                       .filter(accepts())
+                       .collect(Collectors.toList());
 
     }
 
-    private void migrateCasesForPage(String userToken,
-                                     String s2sToken,
-                                     String userId,
-                                     String jurisdictionId,
-                                     String caseType,
-                                     int pageNumber) {
+    private void migrateCasesForPage(final String userToken,
+                                     final String s2sToken,
+                                     final String userId,
+                                     final String jurisdictionId,
+                                     final String caseType,
+                                     final int pageNumber) {
         getCasesForPage(userToken, s2sToken, userId, jurisdictionId, caseType, pageNumber)
                 .stream()
                 .filter(accepts())
                 .forEach(cd -> updateOneCase(userToken, cd, caseType));
     }
 
-
-    private void updateOneCase(String authorisation, CaseDetails cd, String caseType) {
+    private void updateOneCase(final String authorisation, final CaseDetails cd, final String caseType) {
         totalNumberOfCases++;
-        String caseId = cd.getId().toString();
+        final String caseId = cd.getId().toString();
         if (debugEnabled) {
             log.info("updating case with id :" + caseId);
         }
@@ -174,7 +166,7 @@ public class GeneralMigrationService implements MigrationService {
                 log.info(caseId + " updated!");
             }
             updateMigratedCases(cd.getId());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("update failed for case with id [{}] with error [{}] ", cd.getId().toString(),
                     e.getMessage());
 
@@ -182,13 +174,13 @@ public class GeneralMigrationService implements MigrationService {
         }
     }
 
-    private void updateCase(String authorisation, CaseDetails cd, String caseType) {
-        String caseId = cd.getId().toString();
-        Object data = cd.getData();
+    private void updateCase(final String authorisation, final CaseDetails cd, final String caseType) {
+        final String caseId = cd.getId().toString();
+        final Object data = cd.getData();
         if (debugEnabled) {
             log.info("data {}", data.toString());
         }
-        CaseDetails update = ccdUpdateService.update(caseId,
+        final CaseDetails update = ccdUpdateService.update(caseId,
                 data,
                 EVENT_ID,
                 authorisation,
@@ -198,12 +190,12 @@ public class GeneralMigrationService implements MigrationService {
         totalMigrationsPerformed++;
     }
 
-    private void updateFailedCases(Long id) {
-        failedCases = nonNull(this.failedCases) ? (this.failedCases + "," + id) : id.toString();
+    private void updateFailedCases(final Long id) {
+        failedCases = nonNull(failedCases) ? (failedCases + "," + id) : id.toString();
     }
 
-    private void updateMigratedCases(Long id) {
-        migratedCases = nonNull(this.migratedCases) ? (this.migratedCases + "," + id) : id.toString();
+    private void updateMigratedCases(final Long id) {
+        migratedCases = nonNull(migratedCases) ? (migratedCases + "," + id) : id.toString();
     }
 
 }

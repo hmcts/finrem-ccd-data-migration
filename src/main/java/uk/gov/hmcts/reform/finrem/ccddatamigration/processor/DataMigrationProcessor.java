@@ -47,7 +47,6 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Autowired
     private IdamUserClient idamClient;
 
-
     @Autowired
     private IdamUserService idamUserService;
 
@@ -57,36 +56,39 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Autowired
     private MigrationService migrationService;
 
-
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         SpringApplication.run(DataMigrationProcessor.class, args);
     }
 
     @Override
-    public void run(String... args) {
+    public void run(final String... args) {
         try {
             if (debugEnabled) {
                 log.info("Start processing cases");
             }
-            String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
+            final String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
             if (debugEnabled) {
                 log.info("  userToken  : {}", userToken);
             }
-            String s2sToken = authTokenGenerator.generate();
+            final String s2sToken = authTokenGenerator.generate();
             if (debugEnabled) {
                 log.info("  s2sToken : {}", s2sToken);
             }
-            String userId = idamUserService.retrieveUserDetails(userToken).getId();
+            final String userId = idamUserService.retrieveUserDetails(userToken).getId();
             if (debugEnabled) {
                 log.info("  userId  : {}", userId);
             }
             log.info("Case Id {}", ccdCaseId);
 
             if (isNotBlank(ccdCaseId)) {
-                log.info("migrate case, caseId  {}", ccdCaseId);
+                log.info("migrate single case, caseId  {}", ccdCaseId);
                 migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
             } else {
-                caseTypes.forEach(caseType -> migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType));
+                log.info("migrate multiple cases .....");
+                caseTypes.forEach(caseType -> {
+                    log.info("migrate  caseType .....", caseType);
+                    migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
+                });
             }
             log.info("Migrated Cases {} ",
                     isNotBlank(migrationService.getMigratedCases()) ? migrationService.getMigratedCases() : "NONE");
@@ -100,7 +102,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
             log.info("Failed Cases {}",
                     isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
 
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             log.error("Migration failed with the following reason :", e.getMessage());
             e.printStackTrace();
         }
