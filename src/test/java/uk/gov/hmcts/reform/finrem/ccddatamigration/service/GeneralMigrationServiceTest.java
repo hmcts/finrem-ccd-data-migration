@@ -25,7 +25,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 @RunWith(MockitoJUnitRunner.class)
 public class GeneralMigrationServiceTest {
 
@@ -57,13 +56,13 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessASingleCaseAndMigrationIsSuccessful() {
-        Map<String, Object> data = new HashMap<>();
+        final Map<String, Object> data = new HashMap<>();
         data.put("state", "dummyState");
-        CaseDetails caseDetails = CaseDetails.builder()
-                .id(1111L)
-                .caseTypeId(CASE_TYPE)
-                .data(data)
-                .build();
+        final CaseDetails caseDetails = CaseDetails.builder()
+                                          .id(1111L)
+                                          .caseTypeId(CASE_TYPE)
+                                          .data(data)
+                                          .build();
         when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
@@ -76,10 +75,10 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldNotProcessASingleCaseWithOutRedundantFields() {
-        CaseDetails caseDetails = CaseDetails.builder()
-                .id(1111L)
-                .caseTypeId(CASE_TYPE)
-                .build();
+        final CaseDetails caseDetails = CaseDetails.builder()
+                                          .id(1111L)
+                                          .caseTypeId(CASE_TYPE)
+                                          .build();
         when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
@@ -92,13 +91,13 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessASingleCaseAndMigrationIsFailed() {
-        Map<String, Object> data = new HashMap<>();
+        final Map<String, Object> data = new HashMap<>();
         data.put("state", "dummyState");
-        CaseDetails caseDetails = CaseDetails.builder()
-                .id(1111L)
-                .caseTypeId(CASE_TYPE)
-                .data(data)
-                .build();
+        final CaseDetails caseDetails = CaseDetails.builder()
+                                          .id(1111L)
+                                          .caseTypeId(CASE_TYPE)
+                                          .data(data)
+                                          .build();
         when(ccdUpdateService.update(caseDetails.getId().toString(),
                 caseDetails.getData(),
                 EVENT_ID,
@@ -130,17 +129,6 @@ public class GeneralMigrationServiceTest {
         assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
         assertNull(migrationService.getFailedCases());
         assertThat(migrationService.getMigratedCases(), is("1111"));
-    }
-
-    @Test
-    public void shouldNotProcessACase_whenNoStateFieldDryRunIsTrue() {
-        setupFields(true, true);
-        setupMocks(false);
-        migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
-        assertThat(migrationService.getTotalNumberOfCases(), is(0));
-        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
-        assertNull(migrationService.getFailedCases());
-        assertNull(migrationService.getMigratedCases());
     }
 
     @Test
@@ -192,7 +180,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessNoCaseWhenNoCasesAvailableWithDryRun() {
         setupFields(true, false);
-        PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
+        final PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
         paginatedSearchMetadata.setTotalPagesCount(0);
         paginatedSearchMetadata.setTotalResultsCount(0);
 
@@ -208,7 +196,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessNoCaseWhenNoCasesAvailableWithDryRunAsFalse() {
         setupFields(false, false);
-        PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
+        final PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
         paginatedSearchMetadata.setTotalPagesCount(0);
         paginatedSearchMetadata.setTotalResultsCount(0);
 
@@ -221,30 +209,30 @@ public class GeneralMigrationServiceTest {
         assertNull(migrationService.getFailedCases());
     }
 
-    private void setupMocks(boolean addState) {
+    private void setupMocks(final boolean addState) {
         caseDetails1 = createCaseDetails(1111L, CASE_TYPE, addState);
         caseDetails2 = createCaseDetails(1112L, CASE_TYPE, addState);
         caseDetails3 = createCaseDetails(1113L, CASE_TYPE, addState);
 
-        PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
+        final PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
         paginatedSearchMetadata.setTotalPagesCount(1);
         paginatedSearchMetadata.setTotalResultsCount(3);
 
         setupMocksForSearchCases(asList(caseDetails1, caseDetails2, caseDetails3), paginatedSearchMetadata);
     }
 
-    private void setupFields(boolean dryRun, boolean debug) {
-        Field field = ReflectionUtils.findField(GeneralMigrationService.class, "dryRun");
+    private void setupFields(final boolean dryRun, final boolean debug) {
+        final Field field = ReflectionUtils.findField(GeneralMigrationService.class, "dryRun");
         ReflectionUtils.makeAccessible(field);
         ReflectionUtils.setField(field, migrationService, dryRun);
         if (debug) {
-            Field debugEnabled = ReflectionUtils.findField(GeneralMigrationService.class, "debugEnabled");
+            final Field debugEnabled = ReflectionUtils.findField(GeneralMigrationService.class, "debugEnabled");
             ReflectionUtils.makeAccessible(debugEnabled);
             ReflectionUtils.setField(debugEnabled, migrationService, debug);
         }
     }
 
-    private void setUpMockForUpdate(CaseDetails caseDetails1) {
+    private void setUpMockForUpdate(final CaseDetails caseDetails1) {
         when(ccdUpdateService.update(caseDetails1.getId().toString(),
                 caseDetails1.getData(),
                 EVENT_ID,
@@ -253,8 +241,8 @@ public class GeneralMigrationServiceTest {
                 EVENT_DESCRIPTION, CASE_TYPE)).thenReturn(caseDetails1);
     }
 
-    private void setupMocksForSearchCases(List<CaseDetails> caseDetails,
-                                          PaginatedSearchMetadata paginatedSearchMetadata) {
+    private void setupMocksForSearchCases(final List<CaseDetails> caseDetails,
+                                          final PaginatedSearchMetadata paginatedSearchMetadata) {
         searchCriteriaForPagination = new HashMap<>();
         when(ccdApi.getPaginationInfoForSearchForCaseworkers(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID,
                 CASE_TYPE, searchCriteriaForPagination)).thenReturn(paginatedSearchMetadata);
@@ -272,15 +260,15 @@ public class GeneralMigrationServiceTest {
                 .thenReturn(caseDetails);
     }
 
-    private CaseDetails createCaseDetails(long id, String caseType, boolean addState) {
-        Map<String, Object> data1 = new HashMap<>();
+    private CaseDetails createCaseDetails(final long id, final String caseType, final boolean addState) {
+        final Map<String, Object> data1 = new HashMap<>();
         if (addState) {
             data1.put("state", "dummyState");
         }
         return CaseDetails.builder()
-                .id(id)
-                .caseTypeId(caseType)
-                .data(data1)
-                .build();
+                       .id(id)
+                       .caseTypeId(caseType)
+                       .data(data1)
+                       .build();
     }
 }
