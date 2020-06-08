@@ -56,13 +56,7 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessASingleCaseAndMigrationIsSuccessful() {
-        final Map<String, Object> data = new HashMap<>();
-        data.put("state", "dummyState");
-        final CaseDetails caseDetails = CaseDetails.builder()
-                                          .id(1111L)
-                                          .caseTypeId(CASE_TYPE)
-                                          .data(data)
-                                          .build();
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE, true);
         when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
@@ -91,13 +85,7 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessASingleCaseAndMigrationIsFailed() {
-        final Map<String, Object> data = new HashMap<>();
-        data.put("state", "dummyState");
-        final CaseDetails caseDetails = CaseDetails.builder()
-                                          .id(1111L)
-                                          .caseTypeId(CASE_TYPE)
-                                          .data(data)
-                                          .build();
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE, true);
         when(ccdUpdateService.update(caseDetails.getId().toString(),
                 caseDetails.getData(),
                 EVENT_ID,
@@ -209,10 +197,10 @@ public class GeneralMigrationServiceTest {
         assertNull(migrationService.getFailedCases());
     }
 
-    private void setupMocks(final boolean addState) {
-        caseDetails1 = createCaseDetails(1111L, CASE_TYPE, addState);
-        caseDetails2 = createCaseDetails(1112L, CASE_TYPE, addState);
-        caseDetails3 = createCaseDetails(1113L, CASE_TYPE, addState);
+    private void setupMocks(boolean makeCaseMeetMigrationCriteria) {
+        caseDetails1 = createCaseDetails(1111L, CASE_TYPE, makeCaseMeetMigrationCriteria);
+        caseDetails2 = createCaseDetails(1112L, CASE_TYPE, makeCaseMeetMigrationCriteria);
+        caseDetails3 = createCaseDetails(1113L, CASE_TYPE, makeCaseMeetMigrationCriteria);
 
         final PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
         paginatedSearchMetadata.setTotalPagesCount(1);
@@ -232,13 +220,13 @@ public class GeneralMigrationServiceTest {
         }
     }
 
-    private void setUpMockForUpdate(final CaseDetails caseDetails1) {
-        when(ccdUpdateService.update(caseDetails1.getId().toString(),
-                caseDetails1.getData(),
+    private void setUpMockForUpdate(final CaseDetails caseDetails) {
+        when(ccdUpdateService.update(caseDetails.getId().toString(),
+                caseDetails.getData(),
                 EVENT_ID,
                 USER_TOKEN,
                 EVENT_SUMMARY,
-                EVENT_DESCRIPTION, CASE_TYPE)).thenReturn(caseDetails1);
+                EVENT_DESCRIPTION, CASE_TYPE)).thenReturn(caseDetails);
     }
 
     private void setupMocksForSearchCases(final List<CaseDetails> caseDetails,
@@ -260,15 +248,16 @@ public class GeneralMigrationServiceTest {
                 .thenReturn(caseDetails);
     }
 
-    private CaseDetails createCaseDetails(final long id, final String caseType, final boolean addState) {
-        final Map<String, Object> data1 = new HashMap<>();
-        if (addState) {
-            data1.put("state", "dummyState");
+    private CaseDetails createCaseDetails(long id, String caseType, boolean makeCaseMeetMigrationCriteria) {
+        Map<String, Object> caseData = new HashMap<>();
+        if (makeCaseMeetMigrationCriteria) {
+            List<String> natureOfApplicationValues = asList("Property Adjustment  Order", "A settlement or a transfer of property");
+            caseData.put("natureOfApplication2", natureOfApplicationValues);
         }
         return CaseDetails.builder()
                        .id(id)
                        .caseTypeId(caseType)
-                       .data(data1)
+                       .data(caseData)
                        .build();
     }
 }
