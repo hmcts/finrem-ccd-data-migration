@@ -33,7 +33,7 @@ public class GeneralMigrationServiceTest {
     private static final String CASE_ID = "11111";
     private static final String USER_ID = "30";
     private static final String JURISDICTION_ID = "divorce";
-    private static final String CASE_TYPE = "FinancialRemedyMVP2";
+    private static final String CASE_TYPE = "FinancialRemedyContested";
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
@@ -251,8 +251,7 @@ public class GeneralMigrationServiceTest {
     private CaseDetails createCaseDetails(long id, String caseType, boolean makeCaseMeetMigrationCriteria) {
         Map<String, Object> caseData = new HashMap<>();
         if (makeCaseMeetMigrationCriteria) {
-            List<String> natureOfApplicationValues = asList("Property Adjustment  Order", "A settlement or a transfer of property");
-            caseData.put("natureOfApplication2", natureOfApplicationValues);
+            caseData.put("case_type_id", "FinancialRemedyContested");
         }
         return CaseDetails.builder()
                        .id(id)
