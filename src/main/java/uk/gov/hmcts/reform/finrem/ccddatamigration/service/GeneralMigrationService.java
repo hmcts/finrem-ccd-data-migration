@@ -84,7 +84,7 @@ public class GeneralMigrationService implements MigrationService {
     }
 
     private static boolean isContestedCase(CaseDetails caseDetails) {
-        return caseDetails.getCaseTypeId() == "FinancialRemedyContested";
+        return caseDetails.getCaseTypeId().equals("FinancialRemedyContested");
     }
 
     private static boolean hasRegionList(Map<String, Object> caseData) {

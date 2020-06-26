@@ -12,7 +12,7 @@ import uk.gov.hmcts.reform.finrem.ccddatamigration.domain.UserDetails;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.idam.IdamUserService;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 
@@ -29,7 +29,6 @@ public class BaseCcdCaseServiceTest {
 
     @Mock
     private AuthTokenGenerator authTokenGenerator;
-
 
     @Before
     public void setUp() {
