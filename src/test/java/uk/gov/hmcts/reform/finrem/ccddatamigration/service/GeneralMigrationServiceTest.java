@@ -68,6 +68,19 @@ public class GeneralMigrationServiceTest {
     }
 
     @Test
+    public void shouldNotProcessASingleCaseWithRegionList() {
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE, true);
+        caseDetails.getData().put("regionList", "London");
+        when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
+                .thenReturn(caseDetails);
+        migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertNull(migrationService.getFailedCases());
+    }
+
+    @Test
     public void shouldNotProcessASingleCaseWithOutRedundantFields() {
         final CaseDetails caseDetails = CaseDetails.builder()
                                           .id(1111L)
