@@ -77,15 +77,18 @@ public class GeneralMigrationService implements MigrationService {
 
     private static boolean isCandidateForMigration(final CaseDetails caseDetails) {
         if (caseDetails != null && caseDetails.getData() != null) {
-            boolean caseNeedsMigration = false;
             Map<String, Object> caseData = caseDetails.getData();
-            if (caseData.get("natureOfApplication2") != null) {
-                List<String> list = (List) caseData.get("natureOfApplication2");
-                caseNeedsMigration = list.contains("Property Adjustment  Order");
-            }
-            return caseNeedsMigration;
+            return isContestedCase(caseDetails) && !hasRegionList(caseData);
         }
         return false;
+    }
+
+    private static boolean isContestedCase(CaseDetails caseDetails) {
+        return caseDetails.getCaseTypeId().equals("FinancialRemedyContested");
+    }
+
+    private static boolean hasRegionList(Map<String, Object> caseData) {
+        return caseData.containsKey("regionList");
     }
 
     private int requestNumberOfPage(final String authorisation,

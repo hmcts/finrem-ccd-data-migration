@@ -86,7 +86,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
             } else {
                 log.info("migrate multiple cases .....");
                 caseTypes.forEach(caseType -> {
-                    log.info("migrate  caseType .....", caseType);
+                    log.info("migrate caseType ....." + caseType);
                     migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
                 });
             }
@@ -103,9 +103,8 @@ public class DataMigrationProcessor implements CommandLineRunner {
                     isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
 
         } catch (final Throwable e) {
-            log.error("Migration failed with the following reason :", e.getMessage());
+            log.error("Migration failed with the following reason :" + e.getMessage());
             e.printStackTrace();
         }
     }
-
 }

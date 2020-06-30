@@ -33,7 +33,7 @@ public class GeneralMigrationServiceTest {
     private static final String CASE_ID = "11111";
     private static final String USER_ID = "30";
     private static final String JURISDICTION_ID = "divorce";
-    private static final String CASE_TYPE = "FinancialRemedyMVP2";
+    private static final String CASE_TYPE = "FinancialRemedyContested";
     private static final String EVENT_ID = "FR_migrateCase";
     private static final String EVENT_SUMMARY = "Migrate Case";
     private static final String EVENT_DESCRIPTION = "Migrate Case";
@@ -56,7 +56,7 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessASingleCaseAndMigrationIsSuccessful() {
-        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE, true);
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
         when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
@@ -65,6 +65,19 @@ public class GeneralMigrationServiceTest {
         assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
         assertNull(migrationService.getFailedCases());
         assertThat(migrationService.getMigratedCases(), is("1111"));
+    }
+
+    @Test
+    public void shouldNotProcessASingleCaseWithRegionList() {
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
+        caseDetails.getData().put("regionList", "London");
+        when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
+                .thenReturn(caseDetails);
+        migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertNull(migrationService.getFailedCases());
     }
 
     @Test
@@ -85,7 +98,7 @@ public class GeneralMigrationServiceTest {
 
     @Test
     public void shouldProcessASingleCaseAndMigrationIsFailed() {
-        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE, true);
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
         when(ccdUpdateService.update(caseDetails.getId().toString(),
                 caseDetails.getData(),
                 EVENT_ID,
@@ -111,7 +124,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessOnlyOneCandidateCase_whenDryRunIsTrue() {
         setupFields(true, true);
-        setupMocks(true);
+        setupMocks();
         migrationService.processAllTheCases(USER_TOKEN, S2S_TOKEN, USER_ID, JURISDICTION_ID, CASE_TYPE);
         assertThat(migrationService.getTotalNumberOfCases(), is(1));
         assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
@@ -122,7 +135,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessAllTheCandidateCases_whenDryRunIsFalseAndOneCaseFailed() {
         setupFields(false, true);
-        setupMocks(true);
+        setupMocks();
         setUpMockForUpdate(caseDetails1);
         setUpMockForUpdate(caseDetails2);
         when(ccdUpdateService.update(caseDetails3.getId().toString(),
@@ -142,7 +155,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldProcessAllTheCandidateCases_whenDryRunIsFalseAndTwoCasesFailed() {
         setupFields(false, false);
-        setupMocks(true);
+        setupMocks();
         setUpMockForUpdate(caseDetails1);
         when(ccdUpdateService.update(caseDetails2.getId().toString(),
                 caseDetails2.getData(),
@@ -197,10 +210,10 @@ public class GeneralMigrationServiceTest {
         assertNull(migrationService.getFailedCases());
     }
 
-    private void setupMocks(boolean makeCaseMeetMigrationCriteria) {
-        caseDetails1 = createCaseDetails(1111L, CASE_TYPE, makeCaseMeetMigrationCriteria);
-        caseDetails2 = createCaseDetails(1112L, CASE_TYPE, makeCaseMeetMigrationCriteria);
-        caseDetails3 = createCaseDetails(1113L, CASE_TYPE, makeCaseMeetMigrationCriteria);
+    private void setupMocks() {
+        caseDetails1 = createCaseDetails(1111L, CASE_TYPE);
+        caseDetails2 = createCaseDetails(1112L, CASE_TYPE);
+        caseDetails3 = createCaseDetails(1113L, CASE_TYPE);
 
         final PaginatedSearchMetadata paginatedSearchMetadata = new PaginatedSearchMetadata();
         paginatedSearchMetadata.setTotalPagesCount(1);
@@ -248,12 +261,8 @@ public class GeneralMigrationServiceTest {
                 .thenReturn(caseDetails);
     }
 
-    private CaseDetails createCaseDetails(long id, String caseType, boolean makeCaseMeetMigrationCriteria) {
+    private CaseDetails createCaseDetails(long id, String caseType) {
         Map<String, Object> caseData = new HashMap<>();
-        if (makeCaseMeetMigrationCriteria) {
-            List<String> natureOfApplicationValues = asList("Property Adjustment  Order", "A settlement or a transfer of property");
-            caseData.put("natureOfApplication2", natureOfApplicationValues);
-        }
         return CaseDetails.builder()
                        .id(id)
                        .caseTypeId(caseType)

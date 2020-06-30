@@ -50,7 +50,6 @@ public class CcdUpdateServiceImplTest {
     @Mock
     private AuthTokenGenerator authTokenGenerator;
 
-
     @Before
     public void setUp() {
         Field field = ReflectionUtils.findField(CcdUpdateServiceImpl.class, "jurisdictionId");
@@ -60,7 +59,6 @@ public class CcdUpdateServiceImplTest {
         Field createEventIdField = ReflectionUtils.findField(CcdUpdateServiceImpl.class, "createEventId");
         ReflectionUtils.makeAccessible(createEventIdField);
         ReflectionUtils.setField(createEventIdField, underTest, CREATE);
-
     }
 
     @Test
