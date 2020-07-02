@@ -78,7 +78,7 @@ public class GeneralMigrationService implements MigrationService {
     private static boolean isCandidateForMigration(final CaseDetails caseDetails) {
         if (caseDetails != null && caseDetails.getData() != null) {
             Map<String, Object> caseData = caseDetails.getData();
-            return isContestedCase(caseDetails) && !hasRegionList(caseData);
+            return isContestedCase(caseDetails) && !hasRegionList(caseData) && hasCourtDetails(caseData);
         }
         return false;
     }
@@ -89,6 +89,19 @@ public class GeneralMigrationService implements MigrationService {
 
     private static boolean hasRegionList(Map<String, Object> caseData) {
         return caseData.containsKey("regionList");
+    }
+
+    private static boolean hasCourtDetails(Map<String, Object> caseData) {
+        return caseData.containsKey("regionListSL") || hasAllocatedCourtDetails(caseData);
+    }
+
+    private static boolean hasAllocatedCourtDetails(Map<String, Object> caseData) {
+        if (caseData.containsKey("allocatedCourtList")) {
+            Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.get("allocatedCourtList");
+            return allocatedCourtList.containsKey("region");
+        }
+
+        return false;
     }
 
     private int requestNumberOfPage(final String authorisation,
