@@ -68,9 +68,67 @@ public class GeneralMigrationServiceTest {
     }
 
     @Test
+    public void shouldNotProcessASingleCaseWithInavlidAllocatedCourtList() {
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
+        caseDetails.getData().remove("regionListSL");
+        caseDetails.getData().put("allocatedCourtList", "some region");
+
+        when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
+                .thenReturn(caseDetails);
+        migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertNull(migrationService.getFailedCases());
+    }
+
+    @Test
+    public void shouldProcessASingleCaseWithAllocatedCourtList() {
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
+        caseDetails.getData().remove("regionListSL");
+        Map<String, Object> allocatedCourtList = new HashMap<>();
+        allocatedCourtList.put("region", "midlands");
+        caseDetails.getData().put("allocatedCourtList", allocatedCourtList);
+
+        when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
+                .thenReturn(caseDetails);
+        migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), is(1));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
+        assertNull(migrationService.getFailedCases());
+        assertThat(migrationService.getMigratedCases(), is("1111"));
+    }
+
+    @Test
     public void shouldNotProcessASingleCaseWithRegionList() {
         CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
         caseDetails.getData().put("regionList", "London");
+        when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
+                .thenReturn(caseDetails);
+        migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertNull(migrationService.getFailedCases());
+    }
+
+    @Test
+    public void shouldNotProcessASingleCaseConsented() {
+        CaseDetails caseDetails = createCaseDetails(1111L, "consented");
+        when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
+                .thenReturn(caseDetails);
+        migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertNull(migrationService.getFailedCases());
+    }
+
+    @Test
+    public void shouldNotProcessASingleCaseWithoutCourtDetails() {
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
+        caseDetails.getData().remove("regionListSL");
         when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
@@ -263,6 +321,8 @@ public class GeneralMigrationServiceTest {
 
     private CaseDetails createCaseDetails(long id, String caseType) {
         Map<String, Object> caseData = new HashMap<>();
+        caseData.put("regionListSL", "London");
+
         return CaseDetails.builder()
                        .id(id)
                        .caseTypeId(caseType)
