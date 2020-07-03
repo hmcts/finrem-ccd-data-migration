@@ -97,8 +97,12 @@ public class GeneralMigrationService implements MigrationService {
 
     private static boolean hasAllocatedCourtDetails(Map<String, Object> caseData) {
         if (caseData.containsKey("allocatedCourtList")) {
-            Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.get("allocatedCourtList");
-            return allocatedCourtList.containsKey("region");
+            try {
+                Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.get("allocatedCourtList");
+                return allocatedCourtList.containsKey("region");
+            } catch (ClassCastException e) {
+                return false;
+            }
         }
 
         return false;
