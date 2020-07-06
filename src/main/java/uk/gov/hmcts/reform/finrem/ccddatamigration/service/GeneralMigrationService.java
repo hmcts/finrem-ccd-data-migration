@@ -92,13 +92,26 @@ public class GeneralMigrationService implements MigrationService {
     }
 
     private static boolean hasCourtDetails(Map<String, Object> caseData) {
-        return caseData.containsKey("regionListSL") || hasAllocatedCourtDetails(caseData);
+        return caseData.containsKey("regionListSL") || hasAllocatedCourtDetails(caseData) || hasAllocatedCourtDetailsGA(caseData);
     }
 
     private static boolean hasAllocatedCourtDetails(Map<String, Object> caseData) {
         if (caseData.containsKey("allocatedCourtList")) {
             try {
                 Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.get("allocatedCourtList");
+                return allocatedCourtList.containsKey("region");
+            } catch (ClassCastException e) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean hasAllocatedCourtDetailsGA(Map<String, Object> caseData) {
+        if (caseData.containsKey("allocatedCourtListGA")) {
+            try {
+                Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.getOrDefault("allocatedCourtListGA", new HashMap<>());
                 return allocatedCourtList.containsKey("region");
             } catch (ClassCastException e) {
                 return false;
