@@ -68,7 +68,7 @@ public class GeneralMigrationServiceTest {
     }
 
     @Test
-    public void shouldNotProcessASingleCaseWithInavlidAllocatedCourtList() {
+    public void shouldNotProcessASingleCaseWithInvalidAllocatedCourtList() {
         CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
         caseDetails.getData().remove("regionListSL");
         caseDetails.getData().put("allocatedCourtList", "some region");
@@ -89,6 +89,24 @@ public class GeneralMigrationServiceTest {
         Map<String, Object> allocatedCourtList = new HashMap<>();
         allocatedCourtList.put("region", "midlands");
         caseDetails.getData().put("allocatedCourtList", allocatedCourtList);
+
+        when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
+                .thenReturn(caseDetails);
+        migrationService.processSingleCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        verify(ccdApi, times(1)).getCase(USER_TOKEN, S2S_TOKEN, CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), is(1));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
+        assertNull(migrationService.getFailedCases());
+        assertThat(migrationService.getMigratedCases(), is("1111"));
+    }
+
+    @Test
+    public void shouldProcessASingleCaseWithAllocatedCourtListGA() {
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
+        caseDetails.getData().remove("regionListSL");
+        Map<String, Object> allocatedCourtList = new HashMap<>();
+        allocatedCourtList.put("region", "midlands");
+        caseDetails.getData().put("allocatedCourtListGA", allocatedCourtList);
 
         when(ccdApi.getCase(USER_TOKEN, S2S_TOKEN, CASE_ID))
                 .thenReturn(caseDetails);
