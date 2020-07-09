@@ -67,24 +67,20 @@ public class DataMigrationProcessor implements CommandLineRunner {
                 log.info("Start processing cases");
             }
             final String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
-            if (debugEnabled) {
-                log.info("  userToken  : {}", userToken);
-            }
             final String s2sToken = authTokenGenerator.generate();
-            if (debugEnabled) {
-                log.info("  s2sToken : {}", s2sToken);
-            }
             final String userId = idamUserService.retrieveUserDetails(userToken).getId();
             if (debugEnabled) {
+                log.info("  userToken  : {}", userToken);
+                log.info("  s2sToken : {}", s2sToken);
                 log.info("  userId  : {}", userId);
             }
             log.info("Case Id {}", ccdCaseId);
 
             if (isNotBlank(ccdCaseId)) {
-                log.info("migrate single case, caseId  {}", ccdCaseId);
+                log.info("Migrate single case with Case ID: {}", ccdCaseId);
                 migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
             } else {
-                log.info("migrate multiple cases .....");
+                log.info("Migrate multiple cases .....");
                 caseTypes.forEach(caseType -> {
                     log.info("migrate caseType ....." + caseType);
                     migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
@@ -99,7 +95,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
             log.info("Total number of cases: " + migrationService.getTotalNumberOfCases());
             log.info("Total migrations performed: " + migrationService.getTotalMigrationsPerformed());
             log.info("-----------------------------");
-            log.info("Failed Cases {}",
+            log.info("Failed Cases: {}",
                     isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
 
         } catch (final Throwable e) {

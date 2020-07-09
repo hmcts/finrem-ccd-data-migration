@@ -54,7 +54,7 @@ public class GeneralMigrationService implements MigrationService {
                 log.info("Case {} doesn't meet migration criteria", aCase.getId());
             }
         } catch (final Exception ex) {
-            log.error("case {} not found, {}", ccdCaseId, ex.getMessage());
+            log.error("Case {} not found, {}", ccdCaseId, ex.getMessage());
         }
     }
 
@@ -66,10 +66,10 @@ public class GeneralMigrationService implements MigrationService {
         log.info("Number of pages : {}", numberOfPages);
 
         if (dryRun) {
-            log.info("caseType {}  and dryRun for one case ...", caseType);
+            log.info("caseType {} and dryRun for one case ...", caseType);
             dryRunWithOneCase(userToken, s2sToken, userId, jurisdictionId, caseType, numberOfPages);
         } else {
-            log.info("migrating all the cases ...");
+            log.info("Migrating all the cases ...");
             IntStream.rangeClosed(1, numberOfPages)
                     .forEach(pageNumber -> migrateCasesForPage(userToken, s2sToken, userId, jurisdictionId, caseType, pageNumber));
         }
@@ -135,7 +135,7 @@ public class GeneralMigrationService implements MigrationService {
                 caseType,
                 searchCriteria);
         if (debugEnabled) {
-            log.debug("Pagination>>" + paginationInfoForSearchForCaseworkers.toString());
+            log.debug("Pagination>> " + paginationInfoForSearchForCaseworkers.toString());
         }
         return paginationInfoForSearchForCaseworkers.getTotalPagesCount();
     }
@@ -184,7 +184,7 @@ public class GeneralMigrationService implements MigrationService {
         totalNumberOfCases++;
         final String caseId = caseDetails.getId().toString();
         if (debugEnabled) {
-            log.info("updating case with id :" + caseId);
+            log.info("Updating case with Case ID:" + caseId);
         }
         try {
             updateCase(authorisation, caseDetails, caseType);
@@ -193,7 +193,7 @@ public class GeneralMigrationService implements MigrationService {
             }
             updateMigratedCases(caseDetails.getId());
         } catch (final Exception e) {
-            log.error("update failed for case with id [{}] with error [{}] ", caseDetails.getId().toString(), e.getMessage());
+            log.error("Update failed for Case ID [{}] with error [{}] ", caseDetails.getId().toString(), e.getMessage());
             updateFailedCases(caseDetails.getId());
         }
     }
