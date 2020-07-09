@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '2.0.5.RELEASE'
+        springBootVersion = '2.2.6.RELEASE'
     }
     repositories {
         jcenter()
@@ -22,7 +22,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.0.9.RELEASE'
     id 'jacoco'
     id 'org.sonarqube' version '2.5'
-    id 'org.springframework.boot' version '1.5.12.RELEASE'
+    id 'org.springframework.boot' version '2.2.6.RELEASE'
 }
 
 group = 'uk.gov.hmcts.reform.finrem.ccddatamigration'
@@ -66,12 +66,10 @@ def versions = [
         junit: '4.13',
         lombok: '1.16.18',
         reformLogging: '5.1.5',
-        reformSpringBootAutoConfigure: '1.1.0',
         restAssured: '3.0.3',
         serenity: '1.5.2',
         serenityCucumber: '1.1.3',
         serviceTokenGenerator: '1.0.0',
-        springfoxSwagger: '2.9.0',
         unirest: '1.4.9',
         wiremockVersion: '2.26.3'
 ]
@@ -82,8 +80,6 @@ dependencies {
     implementation group: 'commons-io', name: 'commons-io', version: versions.commonsIo
     implementation group: 'io.github.openfeign', name: 'feign-httpclient', version: versions.feignHttpClient
     implementation group: 'io.rest-assured', name: 'rest-assured', version: versions.restAssured
-    implementation group: 'io.springfox', name: 'springfox-swagger2', version: versions.springfoxSwagger
-    implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: versions.springfoxSwagger
     implementation group: 'org.apache.commons', name: 'commons-lang3', version : versions.commonsLang3
     implementation group: 'org.springframework', name: 'spring-context-support'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-json'
@@ -98,7 +94,6 @@ dependencies {
     implementation group: 'uk.gov.hmcts.reform', name: 'logging-appinsights', version: versions.reformLogging
     implementation group: 'uk.gov.hmcts.reform', name: 'logging-httpcomponents', version: versions.reformLogging
     implementation group: 'uk.gov.hmcts.reform', name: 'logging-spring', version: versions.reformLogging
-    implementation group: 'uk.gov.hmcts.reform', name: 'http-proxy-spring-boot-autoconfigure', version: versions.reformSpringBootAutoConfigure
     implementation (group: 'uk.gov.hmcts.reform', name:'service-auth-provider-client', version: versions.serviceTokenGenerator)
             {
                 exclude group: 'io.reactivex', module: 'io.reactivex'
