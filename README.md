@@ -6,7 +6,7 @@ This purpose of this application is to migrate data between CCD fields. This app
 
 ### Prerequisites
 
-- [JDK 8](https://www.oracle.com/java)
+- [JDK 11](https://www.oracle.com/java)
 - Caseworker credentials for relevant environment
 - OAUTH2_CLIENT_FINREM secret value
 - TOTP_SECRET secret value
