@@ -31,6 +31,11 @@ After building the project, you can run the JAR file (finrem-1.0.0-SNAPSHOT.jar 
 
 You should run the migration in 'dry run' mode first - this will iterate over all relevant cases but not actually modify any date - this will ensure your migration logic has no issues.
 
+- "OAUTH2_CLIENT_FINREM" = ‘idam-secret’ in FR Azure Key Vault
+- "TOTP_SECRET" = ‘microservicekey-finrem-ccd-data-migrator’ in s2s Azure Key Vault
+- "USER_NAME" = valid caseworker username for given environment
+- "PASSWORD" = relevant caseworker password for given environment
+
 Local dry run:
 `java -jar ./build/libs/finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar --DRYRUN=true`
 
