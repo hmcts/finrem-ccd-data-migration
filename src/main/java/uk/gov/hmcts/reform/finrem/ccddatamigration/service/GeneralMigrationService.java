@@ -17,15 +17,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_ID;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isContestedCase;
 
 @Component("generalMigrationService")
 @RequiredArgsConstructor
 @Slf4j
 public class GeneralMigrationService implements MigrationService {
-
-    private static final String EVENT_ID = "FR_migrateCase";
-    private static final String EVENT_SUMMARY = "Migrate Case";
-    private static final String EVENT_DESCRIPTION = "Migrate Case";
 
     private final CcdUpdateService ccdUpdateService;
     private final CoreCaseDataApi ccdApi;
@@ -81,10 +81,6 @@ public class GeneralMigrationService implements MigrationService {
             return isContestedCase(caseDetails) && !hasRegionList(caseData) && hasCourtDetails(caseData);
         }
         return false;
-    }
-
-    private static boolean isContestedCase(CaseDetails caseDetails) {
-        return caseDetails.getCaseTypeId().equals("FinancialRemedyContested");
     }
 
     private static boolean hasRegionList(Map<String, Object> caseData) {

@@ -22,9 +22,6 @@ public class ServiceTokenGeneratorConfiguration {
             final ServiceAuthorisationApi serviceAuthorisationApi
     ) {
 
-        return createDefaultGenerator(secret,
-                        microService,
-                        serviceAuthorisationApi);
+        return createDefaultGenerator(secret, microService, serviceAuthorisationApi);
     }
-
 }
