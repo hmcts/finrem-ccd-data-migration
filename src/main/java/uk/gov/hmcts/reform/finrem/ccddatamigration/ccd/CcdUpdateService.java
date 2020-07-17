@@ -9,6 +9,5 @@ public interface CcdUpdateService {
                        String authorisation,
                        String eventSummary,
                        String eventDescription,
-                       String caseType
-    );
+                       String caseType);
 }
