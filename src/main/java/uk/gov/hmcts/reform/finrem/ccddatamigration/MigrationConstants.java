@@ -15,6 +15,7 @@ public class MigrationConstants {
     public static final String EVENT_SUMMARY = "Migrate Case";
     public static final String EVENT_DESCRIPTION = "Migrate Case";
 
+    public static final String JURISDICTION_ID = "divorce";
 
     public static final String CASE_TYPE_ID_CONSENTED = "FinancialRemedyMVP2";
     public static final String CASE_TYPE_ID_CONTESTED = "FinancialRemedyContested";

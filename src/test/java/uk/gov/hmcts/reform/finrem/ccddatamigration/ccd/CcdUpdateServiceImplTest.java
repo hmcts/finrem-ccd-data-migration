@@ -22,21 +22,20 @@ import java.util.LinkedHashMap;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.CASE_TYPE_ID_CONSENTED;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_ID;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.JURISDICTION_ID;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_CASE_ID;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_USER_ID;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CcdUpdateServiceImplTest {
 
-    private static final String EVENT_ID = "FR_migrateCase";
-    private static final String CASE_TYPE_CONSENTED = "FinancialRemedyMVP2";
-    private static final String CASE_TYPE_CONTESTED = "FinancialRemedyContested";
-    private static final String CASE_ID = "123456789";
-    private static final String JURISDICTION_ID = "divorce";
-    private static final String USER_ID = "30";
     private static final String CREATE = "create";
     private static final String AUTH_TOKEN = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJubGJoN";
     private static final String EVENT_TOKEN = "Bearer aaaadsadsasawewewewew";
-    private static final String EVENT_SUMMARY = "Migrate Case";
-    private static final String EVENT_DESC = "Migrate Case";
 
     @InjectMocks
     private CcdUpdateServiceImpl underTest;
@@ -63,7 +62,6 @@ public class CcdUpdateServiceImplTest {
 
     @Test
     public void shouldUpdateTheCase() {
-        // given
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         data.put("solicitorEmail", "Padmaja.Ramisetti@hmcts.net");
         data.put("solicitorName", "PADMAJA");
@@ -81,11 +79,10 @@ public class CcdUpdateServiceImplTest {
 
         setupMocks(userDetails, data);
 
-        //when
-        CaseDetails update = underTest.update(CASE_ID, data, EVENT_ID, AUTH_TOKEN,
-                EVENT_SUMMARY, EVENT_DESC, CASE_TYPE_CONSENTED);
-        //then
-        assertThat(update.getId(), is(Long.parseLong(CASE_ID)));
+        CaseDetails update = underTest.update(TEST_CASE_ID, data, EVENT_ID, AUTH_TOKEN,
+                EVENT_SUMMARY, EVENT_DESCRIPTION, CASE_TYPE_ID_CONSENTED);
+
+        assertThat(update.getId(), is(Long.parseLong(TEST_CASE_ID)));
         assertThat(update.getData().get("solicitorEmail"), is("Padmaja.Ramisetti@hmcts.net"));
         assertThat(update.getData().get("solicitorName"), is("PADMAJA"));
         assertThat(update.getData().get("solicitorReference"), is("LL02"));
@@ -105,13 +102,13 @@ public class CcdUpdateServiceImplTest {
                 .build();
 
         when(coreCaseDataApi.startEventForCaseWorker(AUTH_TOKEN, AUTH_TOKEN, "30",
-                JURISDICTION_ID, CASE_TYPE_CONSENTED, CASE_ID, EVENT_ID))
+                JURISDICTION_ID, CASE_TYPE_ID_CONSENTED, TEST_CASE_ID, EVENT_ID))
                 .thenReturn(startEventResponse);
 
         CaseDataContent caseDataContent = CaseDataContent.builder()
                 .event(Event.builder()
                         .id(EVENT_ID)
-                        .description(EVENT_DESC)
+                        .description(EVENT_DESCRIPTION)
                         .summary(EVENT_SUMMARY)
                         .build())
                 .eventToken(EVENT_TOKEN)
@@ -120,11 +117,11 @@ public class CcdUpdateServiceImplTest {
                 .build();
 
         CaseDetails caseDetailsConsented = CaseDetails.builder()
-                .id(123456789L)
-                .caseTypeId(CASE_TYPE_CONSENTED)
+                .id(1234123412341234L)
+                .caseTypeId(CASE_TYPE_ID_CONSENTED)
                 .data(data)
                 .build();
-        when(coreCaseDataApi.submitEventForCaseWorker(AUTH_TOKEN, AUTH_TOKEN, USER_ID, JURISDICTION_ID,
-                CASE_TYPE_CONSENTED, CASE_ID, true, caseDataContent)).thenReturn(caseDetailsConsented);
+        when(coreCaseDataApi.submitEventForCaseWorker(AUTH_TOKEN, AUTH_TOKEN, TEST_USER_ID, JURISDICTION_ID,
+            CASE_TYPE_ID_CONSENTED, TEST_CASE_ID, true, caseDataContent)).thenReturn(caseDetailsConsented);
     }
 }

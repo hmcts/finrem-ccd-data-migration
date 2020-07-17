@@ -17,4 +17,9 @@ public class CommonFunction {
     public static boolean isConsentedCase(CaseDetails caseDetails) {
         return caseDetails.getCaseTypeId().equals(CASE_TYPE_ID_CONSENTED);
     }
+
+    public static boolean isCaseInCorrectState(CaseDetails caseDetails, String expectedState) {
+
+        return caseDetails.getState().equals(expectedState);
+    }
 }

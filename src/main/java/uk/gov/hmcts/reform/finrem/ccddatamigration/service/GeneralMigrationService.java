@@ -18,9 +18,9 @@ import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_ID;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isContestedCase;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isCaseInCorrectState;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isConsentedCase;
 
 @Component("generalMigrationService")
 @RequiredArgsConstructor
@@ -77,43 +77,8 @@ public class GeneralMigrationService implements MigrationService {
 
     private static boolean isCandidateForMigration(final CaseDetails caseDetails) {
         if (caseDetails != null && caseDetails.getData() != null) {
-            Map<String, Object> caseData = caseDetails.getData();
-            return isContestedCase(caseDetails) && !hasRegionList(caseData) && hasCourtDetails(caseData);
+            return isConsentedCase(caseDetails) && isCaseInCorrectState(caseDetails, "Consent Order Made");
         }
-        return false;
-    }
-
-    private static boolean hasRegionList(Map<String, Object> caseData) {
-        return caseData.containsKey("regionList");
-    }
-
-    private static boolean hasCourtDetails(Map<String, Object> caseData) {
-        return caseData.containsKey("regionListSL") || hasAllocatedCourtDetails(caseData) || hasAllocatedCourtDetailsGA(caseData);
-    }
-
-    private static boolean hasAllocatedCourtDetails(Map<String, Object> caseData) {
-        if (caseData.containsKey("allocatedCourtList")) {
-            try {
-                Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.get("allocatedCourtList");
-                return allocatedCourtList.containsKey("region");
-            } catch (ClassCastException e) {
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean hasAllocatedCourtDetailsGA(Map<String, Object> caseData) {
-        if (caseData.containsKey("allocatedCourtListGA")) {
-            try {
-                Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.getOrDefault("allocatedCourtListGA", new HashMap<>());
-                return allocatedCourtList.containsKey("region");
-            } catch (ClassCastException e) {
-                return false;
-            }
-        }
-
         return false;
     }
 
@@ -200,13 +165,15 @@ public class GeneralMigrationService implements MigrationService {
         if (debugEnabled) {
             log.info("data {}", data.toString());
         }
-        final CaseDetails update = ccdUpdateService.update(caseId,
-                data,
-                EVENT_ID,
-                authorisation,
-                EVENT_SUMMARY,
-                EVENT_DESCRIPTION,
-                caseType);
+        ccdUpdateService.update(
+            caseId,
+            data,
+            //EVENT_ID, - should be replaced after 'Send Order' batch job is complete
+            "Send Order",
+            authorisation,
+            EVENT_SUMMARY,
+            EVENT_DESCRIPTION,
+            caseType);
         totalMigrationsPerformed++;
     }
 
