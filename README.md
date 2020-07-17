@@ -81,6 +81,11 @@ The majority of customisation can be achieved by modifying the following files:
 - GeneralMigrationService.java
 - application.properties
 
+Make sure to make use of common or previously used methods inside CommonFunction.java
+
+This app can also be used to run a specific event for multiple cases in CCD rather than doing a specific data migration.
+For example, if you need to re-run the sending of letters to multiple users, you can use this app to trigger the 'Send Order' event; simply replace 'EVENT_ID' inside GeneralMigrationService.java (just be sure to replace once done).  
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.

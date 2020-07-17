@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.AUTHORIZATION_HEADER;
+
 @Component
 public class IdamUtils implements IdamUserClient {
 
@@ -28,7 +30,7 @@ public class IdamUtils implements IdamUserClient {
         final String authHeader = "Basic " + new String(Base64.getEncoder().encode((userLoginDetails).getBytes()));
 
         Response response = RestAssured.given()
-                .header("Authorization", authHeader)
+                .header(AUTHORIZATION_HEADER, authHeader)
                 .relaxedHTTPSValidation()
                 .post(idamCodeUrl());
         if (response.getStatusCode() >= 300) {
