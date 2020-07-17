@@ -85,6 +85,7 @@ public class GeneralMigrationServiceTest {
     @Test
     public void shouldNotProcessASingleCaseContested() {
         CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE_ID_CONTESTED);
+
         when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
