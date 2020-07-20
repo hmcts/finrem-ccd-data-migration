@@ -24,6 +24,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.CASE_TYPE_ID_CONSENTED;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.CASE_TYPE_ID_CONTESTED;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
@@ -35,9 +36,6 @@ import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_USE
 
 @RunWith(MockitoJUnitRunner.class)
 public class GeneralMigrationServiceTest {
-
-    private static final String CASE_TYPE = CASE_TYPE_ID_CONTESTED;
-    private static final String EVENT_ID = "FR_migrateCase";
 
     @InjectMocks
     private GeneralMigrationService migrationService;
@@ -55,6 +53,9 @@ public class GeneralMigrationServiceTest {
     private CaseDetails caseDetails2;
     private CaseDetails caseDetails3;
 
+    private static final String EVENT_ID = "FR_sendOrderForApproved";
+    private static final String CASE_TYPE = CASE_TYPE_ID_CONSENTED;
+
     @Test
     public void shouldProcessASingleCaseAndMigrationIsSuccessful() {
         CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
@@ -69,11 +70,9 @@ public class GeneralMigrationServiceTest {
     }
 
     @Test
-    public void shouldNotProcessASingleCaseWithInvalidAllocatedCourtList() {
+    public void shouldNotProcessASingleCaseNotInCorrectState() {
         CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
-        caseDetails.getData().remove("regionListSL");
-        caseDetails.getData().put("allocatedCourtList", "some region");
-
+        caseDetails.setState("Random State");
         when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
@@ -84,47 +83,19 @@ public class GeneralMigrationServiceTest {
     }
 
     @Test
-    public void shouldProcessASingleCaseWithAllocatedCourtList() {
-        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
-        caseDetails.getData().remove("regionListSL");
-        Map<String, Object> allocatedCourtList = new HashMap<>();
-        allocatedCourtList.put("region", "midlands");
-        caseDetails.getData().put("allocatedCourtList", allocatedCourtList);
+    public void shouldNotProcessASingleCaseThatDoesNotHaveLatestConsentOrder() {
+        Map<String, Object> caseData = new HashMap<>();
 
+        CaseDetails caseDetails = CaseDetails.builder()
+            .id(1111L)
+            .caseTypeId(CASE_TYPE)
+            .data(caseData)
+            .state("consentOrderMade")
+            .build();
+
+        caseDetails.setData(caseData);
         when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
-                .thenReturn(caseDetails);
-        migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        assertThat(migrationService.getTotalNumberOfCases(), is(1));
-        assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
-        assertNull(migrationService.getFailedCases());
-        assertThat(migrationService.getMigratedCases(), is("1111"));
-    }
-
-    @Test
-    public void shouldProcessASingleCaseWithAllocatedCourtListGA() {
-        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
-        caseDetails.getData().remove("regionListSL");
-        Map<String, Object> allocatedCourtList = new HashMap<>();
-        allocatedCourtList.put("region", "midlands");
-        caseDetails.getData().put("allocatedCourtListGA", allocatedCourtList);
-
-        when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
-                .thenReturn(caseDetails);
-        migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        assertThat(migrationService.getTotalNumberOfCases(), is(1));
-        assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
-        assertNull(migrationService.getFailedCases());
-        assertThat(migrationService.getMigratedCases(), is("1111"));
-    }
-
-    @Test
-    public void shouldNotProcessASingleCaseWithRegionList() {
-        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
-        caseDetails.getData().put("regionList", "London");
-        when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
-                .thenReturn(caseDetails);
+            .thenReturn(caseDetails);
         migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
         verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
         assertThat(migrationService.getTotalNumberOfCases(), is(0));
@@ -133,21 +104,9 @@ public class GeneralMigrationServiceTest {
     }
 
     @Test
-    public void shouldNotProcessASingleCaseConsented() {
-        CaseDetails caseDetails = createCaseDetails(1111L, "consented");
-        when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
-                .thenReturn(caseDetails);
-        migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        assertThat(migrationService.getTotalNumberOfCases(), is(0));
-        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
-        assertNull(migrationService.getFailedCases());
-    }
+    public void shouldNotProcessASingleCaseContested() {
+        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE_ID_CONTESTED);
 
-    @Test
-    public void shouldNotProcessASingleCaseWithoutCourtDetails() {
-        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
-        caseDetails.getData().remove("regionListSL");
         when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
                 .thenReturn(caseDetails);
         migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
@@ -155,22 +114,6 @@ public class GeneralMigrationServiceTest {
         assertThat(migrationService.getTotalNumberOfCases(), is(0));
         assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
         assertNull(migrationService.getFailedCases());
-    }
-
-    @Test
-    public void shouldNotProcessASingleCaseWithOutRedundantFields() {
-        final CaseDetails caseDetails = CaseDetails.builder()
-                                          .id(1111L)
-                                          .caseTypeId(CASE_TYPE)
-                                          .build();
-        when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
-                .thenReturn(caseDetails);
-        migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        assertThat(migrationService.getTotalNumberOfCases(), is(0));
-        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
-        assertNull(migrationService.getFailedCases());
-        assertNull(migrationService.getMigratedCases());
     }
 
     @Test
@@ -181,7 +124,8 @@ public class GeneralMigrationServiceTest {
                 EVENT_ID,
                 TEST_USER_TOKEN,
                 EVENT_SUMMARY,
-                EVENT_DESCRIPTION, CASE_TYPE))
+                EVENT_DESCRIPTION,
+                CASE_TYPE))
                 .thenThrow(new RuntimeException("Internal server error"));
         when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
                 .thenReturn(caseDetails);
@@ -191,7 +135,8 @@ public class GeneralMigrationServiceTest {
                 EVENT_ID,
                 TEST_USER_TOKEN,
                 EVENT_SUMMARY,
-                EVENT_DESCRIPTION, CASE_TYPE);
+                EVENT_DESCRIPTION,
+                CASE_TYPE);
         assertThat(migrationService.getTotalNumberOfCases(), is(1));
         assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
         assertThat(migrationService.getFailedCases(), is("1111"));
@@ -216,12 +161,13 @@ public class GeneralMigrationServiceTest {
         setUpMockForUpdate(caseDetails1);
         setUpMockForUpdate(caseDetails2);
         when(ccdUpdateService.update(caseDetails3.getId().toString(),
-                caseDetails3.getData(),
-                EVENT_ID,
-                TEST_USER_TOKEN,
-                EVENT_SUMMARY,
-                EVENT_DESCRIPTION, CASE_TYPE))
-                .thenThrow(new RuntimeException("Internal server error"));
+            caseDetails3.getData(),
+            EVENT_ID,
+            TEST_USER_TOKEN,
+            EVENT_SUMMARY,
+            EVENT_DESCRIPTION,
+            CASE_TYPE))
+            .thenThrow(new RuntimeException("Internal server error"));
         migrationService.processAllTheCases(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_USER_ID, JURISDICTION_ID, CASE_TYPE);
         assertThat(migrationService.getTotalNumberOfCases(), is(3));
         assertThat(migrationService.getTotalMigrationsPerformed(), is(2));
@@ -235,19 +181,20 @@ public class GeneralMigrationServiceTest {
         setupMocks();
         setUpMockForUpdate(caseDetails1);
         when(ccdUpdateService.update(caseDetails2.getId().toString(),
-                caseDetails2.getData(),
-                EVENT_ID,
-                TEST_USER_TOKEN,
-                EVENT_SUMMARY,
-                EVENT_DESCRIPTION, CASE_TYPE))
-                .thenThrow(new RuntimeException("Internal server error"));
+            caseDetails2.getData(),
+            EVENT_ID,
+            TEST_USER_TOKEN,
+            EVENT_SUMMARY,
+            EVENT_DESCRIPTION,
+            CASE_TYPE))
+            .thenThrow(new RuntimeException("Internal server error"));
         when(ccdUpdateService.update(caseDetails3.getId().toString(),
-                caseDetails3.getData(),
-                EVENT_ID,
-                TEST_USER_TOKEN,
-                EVENT_SUMMARY,
-                EVENT_DESCRIPTION, CASE_TYPE))
-                .thenThrow(new RuntimeException("Internal server error"));
+            caseDetails3.getData(),
+            EVENT_ID,
+            TEST_USER_TOKEN,
+            EVENT_SUMMARY,
+            EVENT_DESCRIPTION, CASE_TYPE))
+            .thenThrow(new RuntimeException("Internal server error"));
         migrationService.processAllTheCases(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_USER_ID, JURISDICTION_ID, CASE_TYPE);
         assertThat(migrationService.getTotalNumberOfCases(), is(3));
         assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
@@ -316,7 +263,8 @@ public class GeneralMigrationServiceTest {
                 EVENT_ID,
                 TEST_USER_TOKEN,
                 EVENT_SUMMARY,
-                EVENT_DESCRIPTION, CASE_TYPE)).thenReturn(caseDetails);
+                EVENT_DESCRIPTION,
+                CASE_TYPE)).thenReturn(caseDetails);
     }
 
     private void setupMocksForSearchCases(final List<CaseDetails> caseDetails,
@@ -329,23 +277,24 @@ public class GeneralMigrationServiceTest {
         searchCriteriaForCaseWorker.put("page", "1");
 
         when(ccdApi.searchForCaseworker(
-                TEST_USER_TOKEN,
-                TEST_S2S_TOKEN,
-                TEST_USER_ID,
-                JURISDICTION_ID,
-                CASE_TYPE,
-                searchCriteriaForCaseWorker))
-                .thenReturn(caseDetails);
+            TEST_USER_TOKEN,
+            TEST_S2S_TOKEN,
+            TEST_USER_ID,
+            JURISDICTION_ID,
+            CASE_TYPE,
+            searchCriteriaForCaseWorker))
+            .thenReturn(caseDetails);
     }
 
     private CaseDetails createCaseDetails(long id, String caseType) {
         Map<String, Object> caseData = new HashMap<>();
-        caseData.put("regionListSL", "London");
+        caseData.put("latestConsentOrder", "testMap");
 
         return CaseDetails.builder()
-                       .id(id)
-                       .caseTypeId(caseType)
-                       .data(caseData)
-                       .build();
+            .id(id)
+            .caseTypeId(caseType)
+            .data(caseData)
+            .state("consentOrderMade")
+            .build();
     }
 }

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.finrem.ccddatamigration.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,18 +18,20 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
+import static org.springframework.util.ObjectUtils.isEmpty;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isCaseInCorrectState;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isConsentedCase;
 
 @Component("generalMigrationService")
 @RequiredArgsConstructor
 @Slf4j
 public class GeneralMigrationService implements MigrationService {
 
-    private static final String EVENT_ID = "FR_migrateCase";
-    private static final String EVENT_SUMMARY = "Migrate Case";
-    private static final String EVENT_DESCRIPTION = "Migrate Case";
-
     private final CcdUpdateService ccdUpdateService;
     private final CoreCaseDataApi ccdApi;
+    private static final ObjectMapper mapper = null;
 
     @Getter private int totalMigrationsPerformed;
     @Getter private int totalNumberOfCases;
@@ -77,48 +80,19 @@ public class GeneralMigrationService implements MigrationService {
 
     private static boolean isCandidateForMigration(final CaseDetails caseDetails) {
         if (caseDetails != null && caseDetails.getData() != null) {
-            Map<String, Object> caseData = caseDetails.getData();
-            return isContestedCase(caseDetails) && !hasRegionList(caseData) && hasCourtDetails(caseData);
+            return isConsentedCase(caseDetails)
+                && isCaseInCorrectState(caseDetails, "consentOrderMade")
+                && isLatestConsentOrderFieldPopulated(caseDetails);
         }
         return false;
     }
 
-    private static boolean isContestedCase(CaseDetails caseDetails) {
-        return caseDetails.getCaseTypeId().equals("FinancialRemedyContested");
-    }
+    private static boolean isLatestConsentOrderFieldPopulated(CaseDetails caseDetails) {
 
-    private static boolean hasRegionList(Map<String, Object> caseData) {
-        return caseData.containsKey("regionList");
-    }
+        Map<String, Object> caseData = caseDetails.getData();
+        Object latestConsentOrder = caseData.get("latestConsentOrder");
 
-    private static boolean hasCourtDetails(Map<String, Object> caseData) {
-        return caseData.containsKey("regionListSL") || hasAllocatedCourtDetails(caseData) || hasAllocatedCourtDetailsGA(caseData);
-    }
-
-    private static boolean hasAllocatedCourtDetails(Map<String, Object> caseData) {
-        if (caseData.containsKey("allocatedCourtList")) {
-            try {
-                Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.get("allocatedCourtList");
-                return allocatedCourtList.containsKey("region");
-            } catch (ClassCastException e) {
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean hasAllocatedCourtDetailsGA(Map<String, Object> caseData) {
-        if (caseData.containsKey("allocatedCourtListGA")) {
-            try {
-                Map<String, Object> allocatedCourtList = (Map<String, Object>) caseData.getOrDefault("allocatedCourtListGA", new HashMap<>());
-                return allocatedCourtList.containsKey("region");
-            } catch (ClassCastException e) {
-                return false;
-            }
-        }
-
-        return false;
+        return !isEmpty(latestConsentOrder);
     }
 
     private int requestNumberOfPage(final String authorisation,
@@ -204,13 +178,15 @@ public class GeneralMigrationService implements MigrationService {
         if (debugEnabled) {
             log.info("data {}", data.toString());
         }
-        final CaseDetails update = ccdUpdateService.update(caseId,
-                data,
-                EVENT_ID,
-                authorisation,
-                EVENT_SUMMARY,
-                EVENT_DESCRIPTION,
-                caseType);
+        ccdUpdateService.update(
+            caseId,
+            data,
+            //EVENT_ID, - should be replaced after 'Send Order' batch job is complete
+            "FR_sendOrderForApproved",
+            authorisation,
+            EVENT_SUMMARY,
+            EVENT_DESCRIPTION,
+            caseType);
         totalMigrationsPerformed++;
     }
 
