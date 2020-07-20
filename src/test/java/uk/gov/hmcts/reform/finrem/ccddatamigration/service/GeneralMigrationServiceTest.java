@@ -53,7 +53,7 @@ public class GeneralMigrationServiceTest {
     private CaseDetails caseDetails2;
     private CaseDetails caseDetails3;
 
-    private static final String EVENT_ID = "Send Order";
+    private static final String EVENT_ID = "FR_sendOrderForApproved";
     private static final String CASE_TYPE = CASE_TYPE_ID_CONSENTED;
 
     @Test
@@ -75,6 +75,27 @@ public class GeneralMigrationServiceTest {
         caseDetails.setState("Random State");
         when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
                 .thenReturn(caseDetails);
+        migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
+        verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+        assertNull(migrationService.getFailedCases());
+    }
+
+    @Test
+    public void shouldNotProcessASingleCaseThatDoesNotHaveLatestConsentOrder() {
+        Map<String, Object> caseData = new HashMap<>();
+
+        CaseDetails caseDetails = CaseDetails.builder()
+            .id(1111L)
+            .caseTypeId(CASE_TYPE)
+            .data(caseData)
+            .state("consentOrderMade")
+            .build();
+
+        caseDetails.setData(caseData);
+        when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
+            .thenReturn(caseDetails);
         migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
         verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
         assertThat(migrationService.getTotalNumberOfCases(), is(0));
@@ -267,12 +288,13 @@ public class GeneralMigrationServiceTest {
 
     private CaseDetails createCaseDetails(long id, String caseType) {
         Map<String, Object> caseData = new HashMap<>();
+        caseData.put("latestConsentOrder", "testMap");
 
         return CaseDetails.builder()
             .id(id)
             .caseTypeId(caseType)
             .data(caseData)
-            .state("Consent Order Made")
+            .state("consentOrderMade")
             .build();
     }
 }

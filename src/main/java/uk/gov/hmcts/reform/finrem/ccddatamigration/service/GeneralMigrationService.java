@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.finrem.ccddatamigration.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
+import static org.springframework.util.ObjectUtils.isEmpty;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isCaseInCorrectState;
@@ -29,6 +31,7 @@ public class GeneralMigrationService implements MigrationService {
 
     private final CcdUpdateService ccdUpdateService;
     private final CoreCaseDataApi ccdApi;
+    private static final ObjectMapper mapper = null;
 
     @Getter private int totalMigrationsPerformed;
     @Getter private int totalNumberOfCases;
@@ -77,9 +80,19 @@ public class GeneralMigrationService implements MigrationService {
 
     private static boolean isCandidateForMigration(final CaseDetails caseDetails) {
         if (caseDetails != null && caseDetails.getData() != null) {
-            return isConsentedCase(caseDetails) && isCaseInCorrectState(caseDetails, "Consent Order Made");
+            return isConsentedCase(caseDetails)
+                && isCaseInCorrectState(caseDetails, "consentOrderMade")
+                && isLatestConsentOrderFieldPopulated(caseDetails);
         }
         return false;
+    }
+
+    private static boolean isLatestConsentOrderFieldPopulated(CaseDetails caseDetails) {
+
+        Map<String, Object> caseData = caseDetails.getData();
+        Object latestConsentOrder = caseData.get("latestConsentOrder");
+
+        return !isEmpty(latestConsentOrder);
     }
 
     private int requestNumberOfPage(final String authorisation,
@@ -169,7 +182,7 @@ public class GeneralMigrationService implements MigrationService {
             caseId,
             data,
             //EVENT_ID, - should be replaced after 'Send Order' batch job is complete
-            "Send Order",
+            "FR_sendOrderForApproved",
             authorisation,
             EVENT_SUMMARY,
             EVENT_DESCRIPTION,
