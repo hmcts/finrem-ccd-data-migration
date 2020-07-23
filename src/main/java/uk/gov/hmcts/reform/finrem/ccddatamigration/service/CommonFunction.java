@@ -29,4 +29,10 @@ public class CommonFunction {
 
         return expectedState.equalsIgnoreCase(nullToEmpty(caseDetails.getState()));
     }
+
+    public static boolean isCaseInCorrectState(CaseDetails caseDetails, String expectedState1, String expectedState2) {
+
+        return expectedState1.equalsIgnoreCase(nullToEmpty(caseDetails.getState()))
+            || expectedState2.equalsIgnoreCase(nullToEmpty(caseDetails.getState()));
+    }
 }

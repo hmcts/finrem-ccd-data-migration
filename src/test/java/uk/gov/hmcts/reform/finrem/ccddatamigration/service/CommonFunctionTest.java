@@ -19,7 +19,6 @@ import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction
 @RunWith(MockitoJUnitRunner.class)
 public class CommonFunctionTest {
 
-
     @Test
     public void isConsentedCaseShouldReturnTrueWheCaseTypeIsSetToConsentedCaseType() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
@@ -81,6 +80,27 @@ public class CommonFunctionTest {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, null);
 
         assertThat(isCaseInCorrectState(caseDetails, "expectedState"), is(false));
+    }
+
+    @Test
+    public void isInCorrectCaseStateShouldReturnTrueWhenCaseIsInEitherExpectedState() {
+        CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
+
+        assertThat(isCaseInCorrectState(caseDetails, "expectedState", "redundantSecondState"), is(true));
+    }
+
+    @Test
+    public void isInCorrectCaseStateShouldReturnTrueWhenCaseIsInOneExpectedStateAndOtherIsNull() {
+        CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
+
+        assertThat(isCaseInCorrectState(caseDetails, "expectedState", null), is(true));
+    }
+
+    @Test
+    public void isInCorrectCaseStateShouldReturnFalseWhenCaseIsInNeitherExpectedState() {
+        CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
+
+        assertThat(isCaseInCorrectState(caseDetails, "unexpectedState", "unexpectedState2"), is(false));
     }
 
     private CaseDetails createCaseDetails(String caseType, String state) {

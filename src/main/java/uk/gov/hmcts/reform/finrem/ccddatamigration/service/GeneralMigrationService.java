@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.finrem.ccddatamigration.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +19,7 @@ import java.util.stream.IntStream;
 import static java.util.Objects.nonNull;
 import static org.springframework.util.ObjectUtils.isEmpty;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_ID;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isCaseInCorrectState;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isConsentedCase;
@@ -31,7 +31,6 @@ public class GeneralMigrationService implements MigrationService {
 
     private final CcdUpdateService ccdUpdateService;
     private final CoreCaseDataApi ccdApi;
-    private static final ObjectMapper mapper = null;
 
     @Getter private int totalMigrationsPerformed;
     @Getter private int totalNumberOfCases;
@@ -46,15 +45,14 @@ public class GeneralMigrationService implements MigrationService {
 
     @Override
     public void processSingleCase(final String userToken, final String s2sToken, final String ccdCaseId) {
-        final CaseDetails aCase;
+        final CaseDetails singleCase;
         try {
-            aCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
-            log.info("case data {} ", aCase);
-            if (isCandidateForMigration(aCase)) {
-                final String caseTypeId = aCase.getCaseTypeId();
-                updateOneCase(userToken, aCase, caseTypeId);
+            singleCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
+            if (isCandidateForMigration(singleCase)) {
+                final String caseTypeId = singleCase.getCaseTypeId();
+                updateOneCase(userToken, singleCase, caseTypeId);
             } else {
-                log.info("Case {} doesn't meet migration criteria", aCase.getId());
+                log.info("Case {} doesn't meet migration criteria", singleCase.getId());
             }
         } catch (final Exception ex) {
             log.error("Case {} not found, {}", ccdCaseId, ex.getMessage());
@@ -81,7 +79,7 @@ public class GeneralMigrationService implements MigrationService {
     private static boolean isCandidateForMigration(final CaseDetails caseDetails) {
         if (caseDetails != null && caseDetails.getData() != null) {
             return isConsentedCase(caseDetails)
-                && isCaseInCorrectState(caseDetails, "consentOrderMade")
+                && isCaseInCorrectState(caseDetails, "consentOrderMade", "awaitingResponse")
                 && isLatestConsentOrderFieldPopulated(caseDetails);
         }
         return false;
@@ -95,12 +93,8 @@ public class GeneralMigrationService implements MigrationService {
         return !isEmpty(latestConsentOrder);
     }
 
-    private int requestNumberOfPage(final String authorisation,
-                                    final String serviceAuthorisation,
-                                    final String userId,
-                                    final String jurisdictionId,
-                                    final String caseType,
-                                    final Map<String, String> searchCriteria) {
+    private int requestNumberOfPage(final String authorisation, final String serviceAuthorisation, final String userId,
+                                    final String jurisdictionId, final String caseType, final Map<String, String> searchCriteria) {
         final PaginatedSearchMetadata paginationInfoForSearchForCaseworkers = ccdApi.getPaginationInfoForSearchForCaseworkers(
                 authorisation,
                 serviceAuthorisation,
@@ -128,12 +122,8 @@ public class GeneralMigrationService implements MigrationService {
         }
     }
 
-    private List<CaseDetails> getCasesForPage(final String userToken,
-                                              final String s2sToken,
-                                              final String userId,
-                                              final String jurisdictionId,
-                                              final String caseType,
-                                              final int pageNumber) {
+    private List<CaseDetails> getCasesForPage(final String userToken, final String s2sToken, final String userId,
+                                              final String jurisdictionId, final String caseType, final int pageNumber) {
         final Map<String, String> searchCriteria = new HashMap<>();
         searchCriteria.put("page", String.valueOf(pageNumber));
         return ccdApi.searchForCaseworker(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria)
@@ -142,12 +132,8 @@ public class GeneralMigrationService implements MigrationService {
                        .collect(Collectors.toList());
     }
 
-    private void migrateCasesForPage(final String userToken,
-                                     final String s2sToken,
-                                     final String userId,
-                                     final String jurisdictionId,
-                                     final String caseType,
-                                     final int pageNumber) {
+    private void migrateCasesForPage(final String userToken, final String s2sToken, final String userId,
+                                     final String jurisdictionId, final String caseType, final int pageNumber) {
         getCasesForPage(userToken, s2sToken, userId, jurisdictionId, caseType, pageNumber)
                 .stream()
                 .filter(GeneralMigrationService::isCandidateForMigration)
@@ -158,10 +144,11 @@ public class GeneralMigrationService implements MigrationService {
         totalNumberOfCases++;
         final String caseId = caseDetails.getId().toString();
         if (debugEnabled) {
-            log.info("Updating case with Case ID:" + caseId);
+            log.info("Updating case with Case ID: " + caseId);
         }
         try {
-            updateCase(authorisation, caseDetails, caseType);
+            //updateCase(authorisation, caseDetails, caseType);
+            callSpecificEventForCase(authorisation, caseDetails, caseType);
             if (debugEnabled) {
                 log.info(caseId + " updated!");
             }
@@ -172,6 +159,7 @@ public class GeneralMigrationService implements MigrationService {
         }
     }
 
+    // Default updateCase
     private void updateCase(final String authorisation, final CaseDetails caseDetails, final String caseType) {
         final String caseId = caseDetails.getId().toString();
         final Object data = caseDetails.getData();
@@ -181,7 +169,25 @@ public class GeneralMigrationService implements MigrationService {
         ccdUpdateService.update(
             caseId,
             data,
-            //EVENT_ID, - should be replaced after 'Send Order' batch job is complete
+            EVENT_ID,
+            authorisation,
+            EVENT_SUMMARY,
+            EVENT_DESCRIPTION,
+            caseType);
+        totalMigrationsPerformed++;
+    }
+
+    // Use this if you want to just run a specific event on all eligible cases - e.g. Send Order
+    private void callSpecificEventForCase(final String authorisation, final CaseDetails caseDetails, final String caseType) {
+        final String caseId = caseDetails.getId().toString();
+        final Object data = caseDetails.getData();
+        if (debugEnabled) {
+            log.info("data {}", data.toString());
+        }
+        ccdUpdateService.update(
+            caseId,
+            data,
+            // change below to required Event ID
             "FR_sendOrderForApproved",
             authorisation,
             EVENT_SUMMARY,
