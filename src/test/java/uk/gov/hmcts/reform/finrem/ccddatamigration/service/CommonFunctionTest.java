@@ -19,7 +19,6 @@ import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction
 @RunWith(MockitoJUnitRunner.class)
 public class CommonFunctionTest {
 
-
     @Test
     public void isConsentedCaseShouldReturnTrueWheCaseTypeIsSetToConsentedCaseType() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
@@ -63,24 +62,45 @@ public class CommonFunctionTest {
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnTrueWhenCaseIsInExpectedState() {
+    public void isInCorrectCaseStateShouldReturnTrueWhenStateIsInExpectedState() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
 
         assertThat(isCaseInCorrectState(caseDetails, "expectedState"), is(true));
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnFalseWhenCaseIsInUnexpectedState() {
+    public void isInCorrectCaseStateShouldReturnFalseWhenStateIsInUnexpectedState() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
 
         assertThat(isCaseInCorrectState(caseDetails, "unexpectedState"), is(false));
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnFalseWhenCaseIsNull() {
+    public void isInCorrectCaseStateShouldReturnFalseWhenStateIsNull() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, null);
 
         assertThat(isCaseInCorrectState(caseDetails, "expectedState"), is(false));
+    }
+
+    @Test
+    public void isInCorrectCaseStateShouldReturnTrueWhenMultipleStatesAreProvidedAndOneIsInExpectedState() {
+        CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
+
+        assertThat(isCaseInCorrectState(caseDetails, "expectedState", "redundantSecondState", "redundantThirdState"), is(true));
+    }
+
+    @Test
+    public void isInCorrectCaseStateShouldReturnTrueWhenMultipleStatesAreProvidedAndOneIsInExpectedStateAndOtherIsNull() {
+        CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
+
+        assertThat(isCaseInCorrectState(caseDetails, "expectedState", null), is(true));
+    }
+
+    @Test
+    public void isInCorrectCaseStateShouldReturnFalseWhenMultipleStatesAreProvidedAndNoneAreInExpectedState() {
+        CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
+
+        assertThat(isCaseInCorrectState(caseDetails, "unexpectedState", "unexpectedState2"), is(false));
     }
 
     private CaseDetails createCaseDetails(String caseType, String state) {
