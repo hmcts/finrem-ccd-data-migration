@@ -62,42 +62,42 @@ public class CommonFunctionTest {
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnTrueWhenCaseIsInExpectedState() {
+    public void isInCorrectCaseStateShouldReturnTrueWhenStateIsInExpectedState() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
 
         assertThat(isCaseInCorrectState(caseDetails, "expectedState"), is(true));
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnFalseWhenCaseIsInUnexpectedState() {
+    public void isInCorrectCaseStateShouldReturnFalseWhenStateIsInUnexpectedState() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
 
         assertThat(isCaseInCorrectState(caseDetails, "unexpectedState"), is(false));
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnFalseWhenCaseIsNull() {
+    public void isInCorrectCaseStateShouldReturnFalseWhenStateIsNull() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, null);
 
         assertThat(isCaseInCorrectState(caseDetails, "expectedState"), is(false));
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnTrueWhenCaseIsInEitherExpectedState() {
+    public void isInCorrectCaseStateShouldReturnTrueWhenMultipleStatesAreProvidedAndOneIsInExpectedState() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
 
-        assertThat(isCaseInCorrectState(caseDetails, "expectedState", "redundantSecondState"), is(true));
+        assertThat(isCaseInCorrectState(caseDetails, "expectedState", "redundantSecondState", "redundantThirdState"), is(true));
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnTrueWhenCaseIsInOneExpectedStateAndOtherIsNull() {
+    public void isInCorrectCaseStateShouldReturnTrueWhenMultipleStatesAreProvidedAndOneIsInExpectedStateAndOtherIsNull() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
 
         assertThat(isCaseInCorrectState(caseDetails, "expectedState", null), is(true));
     }
 
     @Test
-    public void isInCorrectCaseStateShouldReturnFalseWhenCaseIsInNeitherExpectedState() {
+    public void isInCorrectCaseStateShouldReturnFalseWhenMultipleStatesAreProvidedAndNoneAreInExpectedState() {
         CaseDetails caseDetails = createCaseDetails(CASE_TYPE_ID_CONSENTED, "expectedState");
 
         assertThat(isCaseInCorrectState(caseDetails, "unexpectedState", "unexpectedState2"), is(false));

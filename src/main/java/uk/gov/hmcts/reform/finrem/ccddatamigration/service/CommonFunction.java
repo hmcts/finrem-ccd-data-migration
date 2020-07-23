@@ -25,14 +25,13 @@ public class CommonFunction {
         return CASE_TYPE_ID_CONSENTED.equalsIgnoreCase(nullToEmpty(caseDetails.getCaseTypeId()));
     }
 
-    public static boolean isCaseInCorrectState(CaseDetails caseDetails, String expectedState) {
-
-        return expectedState.equalsIgnoreCase(nullToEmpty(caseDetails.getState()));
-    }
-
-    public static boolean isCaseInCorrectState(CaseDetails caseDetails, String expectedState1, String expectedState2) {
-
-        return expectedState1.equalsIgnoreCase(nullToEmpty(caseDetails.getState()))
-            || expectedState2.equalsIgnoreCase(nullToEmpty(caseDetails.getState()));
+    // Will handle any amount of states passed in as comma separated strings - "consentOrderMade", "awaitingResponse", "..."
+    public static boolean isCaseInCorrectState(CaseDetails caseDetails, String... states) {
+        for (String state : states) {
+            if (state.equalsIgnoreCase(nullToEmpty(caseDetails.getState()))) {
+                return true;
+            }
+        }
+        return false;
     }
 }
