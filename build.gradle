@@ -58,7 +58,7 @@ distributions {
 }
 
 def versions = [
-        ccdStoreClient: '4.4.1',
+        ccdStoreClient: '4.7.3',
         commonsLang3: '3.10',
         commonsIo: '2.7',
         feignHttpClient: '9.5.1',
