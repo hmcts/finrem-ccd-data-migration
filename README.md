@@ -35,6 +35,9 @@ You should run the migration in 'dry run' mode first - this will iterate over al
 - "TOTP_SECRET" = ‘microservicekey-finrem-ccd-data-migrator’ in s2s Azure Key Vault
 - "USER_NAME" = valid caseworker username for given environment
 - "PASSWORD" = relevant caseworker password for given environment
+- "FILE" = location to a CSV file that contains a list of Case ID's (See src/test/resources/csvExamples/cases.csv for example format)
+
+Using the "FILE" parameter will default to running the "FR_migrateCase" event on CCD which hits the "/migrate" URL in COS. If you want to change this to hit a particular event you'll have to set "specificMigrationEvent" variable to false and then update "callSpecificEventForCase" to point to the specific event you want to run. 
 
 Local dry run:
 `java -jar ./build/libs/finrem-ccd-data-migration-1.0.0-SNAPSHOT.jar --DRYRUN=true`

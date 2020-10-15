@@ -44,6 +44,9 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Value("${log.debug}")
     private boolean debugEnabled;
 
+    @Value("${FILE:}")
+    private String file;
+
     @Autowired
     private IdamUserClient idamClient;
 
@@ -79,6 +82,9 @@ public class DataMigrationProcessor implements CommandLineRunner {
             if (isNotBlank(ccdCaseId)) {
                 log.info("Migrate single case with Case ID: {}", ccdCaseId);
                 migrationService.processSingleCase(userToken, s2sToken, ccdCaseId);
+            } else if (isNotBlank(file)) {
+                log.info("Migrate cases in file");
+                migrationService.processCasesInFile(userToken, s2sToken, file);
             } else {
                 log.info("Migrate multiple cases .....");
                 caseTypes.forEach(caseType -> {

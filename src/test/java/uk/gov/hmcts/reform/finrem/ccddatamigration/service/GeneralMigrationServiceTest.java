@@ -11,28 +11,23 @@ import uk.gov.hmcts.reform.ccd.client.model.CaseDetails;
 import uk.gov.hmcts.reform.ccd.client.model.PaginatedSearchMetadata;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.ccd.CcdUpdateService;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.EMPTY_LIST;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.CASE_TYPE_ID_CONSENTED;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.CASE_TYPE_ID_CONTESTED;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.JURISDICTION_ID;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_CASE_ID;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_S2S_TOKEN;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_USER_ID;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_USER_TOKEN;
+import static org.mockito.Mockito.*;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.*;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GeneralMigrationServiceTest {
@@ -234,6 +229,58 @@ public class GeneralMigrationServiceTest {
         assertNull(migrationService.getFailedCases());
     }
 
+    @Test
+    public void shouldProcessCasesFromCsvFile() throws IOException {
+        setupMocksForCsvCases();
+        URL csvFileResource = getClass().getClassLoader().getResource("csvExamples/cases.csv");
+        String csvFilePath = Objects.requireNonNull(csvFileResource).getPath();
+
+        migrationService.processCasesInFile(TEST_USER_TOKEN, TEST_S2S_TOKEN, csvFilePath);
+
+        assertThat(migrationService.getTotalNumberOfCases(), is(9));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(9));
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void shouldThrowFileNotFoundException() throws IOException {
+        migrationService.processCasesInFile(TEST_USER_TOKEN, TEST_S2S_TOKEN, "FileDoesNotExist");
+    }
+
+    @Test
+    public void shouldProcessEightCasesWhenOneIsNotFound() throws IOException {
+        setupMocksForCsvCases();
+        URL csvFileResource = getClass().getClassLoader().getResource("csvExamples/oneIncorrectCaseId.csv");
+        String csvFilePath = Objects.requireNonNull(csvFileResource).getPath();
+
+        migrationService.processCasesInFile(TEST_USER_TOKEN, TEST_S2S_TOKEN, csvFilePath);
+
+        assertThat(migrationService.getTotalNumberOfCases(), is(8));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(8));
+    }
+
+    @Test
+    public void shouldProcessNoCasesWhenCsvIsEmpty() throws IOException {
+        URL csvFileResource = getClass().getClassLoader().getResource("csvExamples/empty.csv");
+        String csvFilePath = Objects.requireNonNull(csvFileResource).getPath();
+
+        migrationService.processCasesInFile(TEST_USER_TOKEN, TEST_S2S_TOKEN, csvFilePath);
+
+        assertThat(migrationService.getTotalNumberOfCases(), is(0));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
+    }
+
+    @Test
+    public void shouldSkipDuplicateCaseIDs() throws IOException {
+        setupMocksForCsvCases();
+        URL csvFileResource = getClass().getClassLoader().getResource("csvExamples/duplicateIds.csv");
+        String csvFilePath = Objects.requireNonNull(csvFileResource).getPath();
+
+        migrationService.processCasesInFile(TEST_USER_TOKEN, TEST_S2S_TOKEN, csvFilePath);
+
+        assertThat(migrationService.getTotalNumberOfCases(), is(9));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(9));
+    }
+
     private void setupMocks() {
         caseDetails1 = createCaseDetails(1111L, CASE_TYPE);
         caseDetails2 = createCaseDetails(1112L, CASE_TYPE);
@@ -284,6 +331,27 @@ public class GeneralMigrationServiceTest {
             CASE_TYPE,
             searchCriteriaForCaseWorker))
             .thenReturn(caseDetails);
+    }
+
+    private void setupMocksForCsvCases() {
+        List<String> ccdCaseIds = List.of(
+                "1234567891",
+                "1234567892",
+                "1234567893",
+                "1234567894",
+                "1234567895",
+                "1234567896",
+                "1234567897",
+                "1234567898",
+                "1234567899"
+        );
+
+        for (String ccdCaseId : ccdCaseIds) {
+            CaseDetails caseDetails = createCaseDetails(Long.parseLong(ccdCaseId), CASE_TYPE);
+
+            when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, ccdCaseId))
+                    .thenReturn(caseDetails);
+        }
     }
 
     private CaseDetails createCaseDetails(long id, String caseType) {
