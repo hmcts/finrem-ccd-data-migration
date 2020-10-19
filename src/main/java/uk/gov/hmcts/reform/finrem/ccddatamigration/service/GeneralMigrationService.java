@@ -10,6 +10,11 @@ import uk.gov.hmcts.reform.ccd.client.model.CaseDetails;
 import uk.gov.hmcts.reform.ccd.client.model.PaginatedSearchMetadata;
 import uk.gov.hmcts.reform.finrem.ccddatamigration.ccd.CcdUpdateService;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,9 +23,7 @@ import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
 import static org.springframework.util.ObjectUtils.isEmpty;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_ID;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.*;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isCaseInCorrectState;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isConsentedCase;
 
@@ -31,6 +34,8 @@ public class GeneralMigrationService implements MigrationService {
 
     private final CcdUpdateService ccdUpdateService;
     private final CoreCaseDataApi ccdApi;
+
+    private boolean specificMigrationEvent = true;
 
     @Getter private int totalMigrationsPerformed;
     @Getter private int totalNumberOfCases;
@@ -74,6 +79,51 @@ public class GeneralMigrationService implements MigrationService {
             IntStream.rangeClosed(1, numberOfPages)
                     .forEach(pageNumber -> migrateCasesForPage(userToken, s2sToken, userId, jurisdictionId, caseType, pageNumber));
         }
+    }
+
+    @Override
+    public void processCasesInFile(final String userToken, final String s2sToken, final String file) throws IOException {
+        try {
+            // remove or change this to true if you want to run a certain event otherwise it defaults to FR_migrateCase
+            specificMigrationEvent = false;
+            List<String> extractedCaseIds = extractCaseIdsFromCSV(file);
+            CaseDetails singleCase;
+            for (String ccdCaseId : extractedCaseIds) {
+                try {
+                    singleCase = ccdApi.getCase(userToken, s2sToken, ccdCaseId);
+                    updateOneCase(userToken, singleCase, singleCase.getCaseTypeId());
+                } catch (final Exception e) {
+                    log.error("Case {} not found, {}", ccdCaseId, e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            throw e;
+        }
+    }
+
+    private List<String> extractCaseIdsFromCSV(String file) throws IOException {
+        int caseCounter = 0;
+        int duplicationCounter = 0;
+        List<String> extractedCaseIds = new ArrayList<>();
+        String csvLine = "";
+
+        try(BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
+            while((csvLine = fileReader.readLine()) != null) {
+                if (extractedCaseIds.contains(csvLine)) {
+                    log.info("Duplicated Case ID found: {}", csvLine);
+                    duplicationCounter++;
+                } else {
+                    extractedCaseIds.add(csvLine);
+                    caseCounter++;
+                }
+            }
+            log.info("Extracted {} case ID's From file: {} with {} duplications", caseCounter, file, duplicationCounter);
+        } catch (FileNotFoundException e) {
+            log.error(e.getMessage());
+            throw e;
+        }
+        return extractedCaseIds;
     }
 
     private static boolean isCandidateForMigration(final CaseDetails caseDetails) {
@@ -147,8 +197,11 @@ public class GeneralMigrationService implements MigrationService {
             log.info("Updating case with Case ID: " + caseId);
         }
         try {
-            //updateCase(authorisation, caseDetails, caseType);
-            callSpecificEventForCase(authorisation, caseDetails, caseType);
+            if (!specificMigrationEvent) {
+                updateCase(authorisation, caseDetails, caseType);
+            } else {
+                callSpecificEventForCase(authorisation, caseDetails, caseType);
+            }
             if (debugEnabled) {
                 log.info(caseId + " updated!");
             }
