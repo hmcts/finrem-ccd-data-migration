@@ -23,7 +23,9 @@ import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
 import static org.springframework.util.ObjectUtils.isEmpty;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.*;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_ID;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isCaseInCorrectState;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isConsentedCase;
 
@@ -35,7 +37,8 @@ public class GeneralMigrationService implements MigrationService {
     private final CcdUpdateService ccdUpdateService;
     private final CoreCaseDataApi ccdApi;
 
-    private boolean specificMigrationEvent = true;
+    // Defaults to FR_migrateCase event, change this to true and modify "callSpecificEventForCase" for a specific event
+    private boolean specificMigrationEvent = false;
 
     @Getter private int totalMigrationsPerformed;
     @Getter private int totalNumberOfCases;
@@ -84,9 +87,7 @@ public class GeneralMigrationService implements MigrationService {
     @Override
     public void processCasesInFile(final String userToken, final String s2sToken, final String file) throws IOException {
         try {
-            // remove or change this to true if you want to run a certain event otherwise it defaults to FR_migrateCase
-            specificMigrationEvent = false;
-            List<String> extractedCaseIds = extractCaseIdsFromCSV(file);
+            List<String> extractedCaseIds = extractCaseIdsFromCsv(file);
             CaseDetails singleCase;
             for (String ccdCaseId : extractedCaseIds) {
                 try {
@@ -102,14 +103,14 @@ public class GeneralMigrationService implements MigrationService {
         }
     }
 
-    private List<String> extractCaseIdsFromCSV(String file) throws IOException {
+    private List<String> extractCaseIdsFromCsv(String file) throws IOException {
         int caseCounter = 0;
         int duplicationCounter = 0;
         List<String> extractedCaseIds = new ArrayList<>();
         String csvLine = "";
 
-        try(BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
-            while((csvLine = fileReader.readLine()) != null) {
+        try (BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
+            while ((csvLine = fileReader.readLine()) != null) {
                 if (extractedCaseIds.contains(csvLine)) {
                     log.info("Duplicated Case ID found: {}", csvLine);
                     duplicationCounter++;
@@ -197,10 +198,10 @@ public class GeneralMigrationService implements MigrationService {
             log.info("Updating case with Case ID: " + caseId);
         }
         try {
-            if (!specificMigrationEvent) {
-                updateCase(authorisation, caseDetails, caseType);
-            } else {
+            if (specificMigrationEvent) {
                 callSpecificEventForCase(authorisation, caseDetails, caseType);
+            } else {
+                updateCase(authorisation, caseDetails, caseType);
             }
             if (debugEnabled) {
                 log.info(caseId + " updated!");

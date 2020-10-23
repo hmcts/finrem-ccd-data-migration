@@ -44,7 +44,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Value("${log.debug}")
     private boolean debugEnabled;
 
-    @Value("${FILE:}")
+    @Value("${ccd.file}")
     private String file;
 
     @Autowired

@@ -61,7 +61,7 @@ def versions = [
         ccdStoreClient: '4.7.3',
         commonsLang3: '3.10',
         commonsIo: '2.7',
-        feignHttpClient: '9.5.1',
+        feignHttpClient: '10.10.1',
         jsonAssert: '1.2.3',
         junit: '4.13',
         lombok: '1.18.12',
@@ -69,7 +69,7 @@ def versions = [
         restAssured: '3.0.3',
         serenity: '2.2.10',
         serenityCucumber: '1.9.51',
-        serviceTokenGenerator: '1.0.0',
+        serviceTokenGenerator: '3.1.1',
         unirest: '1.4.9',
         wiremockVersion: '2.27.1'
 ]
