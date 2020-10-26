@@ -25,9 +25,18 @@ import static java.util.Collections.EMPTY_LIST;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.*;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.CASE_TYPE_ID_CONSENTED;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.CASE_TYPE_ID_CONTESTED;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.JURISDICTION_ID;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_CASE_ID;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_S2S_TOKEN;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_USER_ID;
+import static uk.gov.hmcts.reform.finrem.ccddatamigration.TestConstants.TEST_USER_TOKEN;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GeneralMigrationServiceTest {
@@ -48,7 +57,7 @@ public class GeneralMigrationServiceTest {
     private CaseDetails caseDetails2;
     private CaseDetails caseDetails3;
 
-    private static final String EVENT_ID = "FR_sendOrderForApproved";
+    private static final String EVENT_ID = "FR_migrateCase";
     private static final String CASE_TYPE = CASE_TYPE_ID_CONSENTED;
 
     @Test
