@@ -26,7 +26,6 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_DESCRIPTION;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_ID;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.MigrationConstants.EVENT_SUMMARY;
-import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isCaseInCorrectState;
 import static uk.gov.hmcts.reform.finrem.ccddatamigration.service.CommonFunction.isConsentedCase;
 
 @Component("generalMigrationService")
@@ -38,12 +37,17 @@ public class GeneralMigrationService implements MigrationService {
     private final CoreCaseDataApi ccdApi;
 
     // Defaults to FR_migrateCase event, change this to true and modify "callSpecificEventForCase" for a specific event
-    private boolean specificMigrationEvent = false;
+    @Value("${migration.specificEvent}")
+    private String specificMigrationEvent;
 
-    @Getter private int totalMigrationsPerformed;
-    @Getter private int totalNumberOfCases;
-    @Getter private String failedCases;
-    @Getter private String migratedCases;
+    @Getter
+    private int totalMigrationsPerformed;
+    @Getter
+    private int totalNumberOfCases;
+    @Getter
+    private String failedCases;
+    @Getter
+    private String migratedCases;
 
     @Value("${log.debug}")
     private boolean debugEnabled;
@@ -129,9 +133,7 @@ public class GeneralMigrationService implements MigrationService {
 
     private static boolean isCandidateForMigration(final CaseDetails caseDetails) {
         if (caseDetails != null && caseDetails.getData() != null) {
-            return isConsentedCase(caseDetails)
-                && isCaseInCorrectState(caseDetails, "consentOrderMade", "awaitingResponse")
-                && isLatestConsentOrderFieldPopulated(caseDetails);
+            return isConsentedCase(caseDetails);
         }
         return false;
     }
@@ -178,9 +180,9 @@ public class GeneralMigrationService implements MigrationService {
         final Map<String, String> searchCriteria = new HashMap<>();
         searchCriteria.put("page", String.valueOf(pageNumber));
         return ccdApi.searchForCaseworker(userToken, s2sToken, userId, jurisdictionId, caseType, searchCriteria)
-                       .stream()
-                       .filter(GeneralMigrationService::isCandidateForMigration)
-                       .collect(Collectors.toList());
+                .stream()
+                .filter(GeneralMigrationService::isCandidateForMigration)
+                .collect(Collectors.toList());
     }
 
     private void migrateCasesForPage(final String userToken, final String s2sToken, final String userId,
@@ -194,11 +196,9 @@ public class GeneralMigrationService implements MigrationService {
     private void updateOneCase(final String authorisation, final CaseDetails caseDetails, final String caseType) {
         totalNumberOfCases++;
         final String caseId = caseDetails.getId().toString();
-        if (debugEnabled) {
-            log.info("Updating case with Case ID: " + caseId);
-        }
+        log.info("Processing case with Case ID: " + caseId);
         try {
-            if (specificMigrationEvent) {
+            if (specificMigrationEvent != null) {
                 callSpecificEventForCase(authorisation, caseDetails, caseType);
             } else {
                 updateCase(authorisation, caseDetails, caseType);
@@ -221,13 +221,13 @@ public class GeneralMigrationService implements MigrationService {
             log.info("data {}", data.toString());
         }
         ccdUpdateService.update(
-            caseId,
-            data,
-            EVENT_ID,
-            authorisation,
-            EVENT_SUMMARY,
-            EVENT_DESCRIPTION,
-            caseType);
+                caseId,
+                data,
+                EVENT_ID,
+                authorisation,
+                EVENT_SUMMARY,
+                EVENT_DESCRIPTION,
+                caseType);
         totalMigrationsPerformed++;
     }
 
@@ -239,14 +239,14 @@ public class GeneralMigrationService implements MigrationService {
             log.info("data {}", data.toString());
         }
         ccdUpdateService.update(
-            caseId,
-            data,
-            // change below to required Event ID
-            "FR_sendOrderForApproved",
-            authorisation,
-            EVENT_SUMMARY,
-            EVENT_DESCRIPTION,
-            caseType);
+                caseId,
+                data,
+                // change below to required Event ID
+                specificMigrationEvent,
+                authorisation,
+                EVENT_SUMMARY,
+                EVENT_DESCRIPTION,
+                caseType);
         totalMigrationsPerformed++;
     }
 
