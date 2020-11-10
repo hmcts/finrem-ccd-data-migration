@@ -58,6 +58,7 @@ public class GeneralMigrationServiceTest {
     private CaseDetails caseDetails3;
 
     private static final String EVENT_ID = "FR_migrateCase";
+    private static final String SPECIFIC_EVENT_ID = "FR_migrateFrcCase";
     private static final String CASE_TYPE = CASE_TYPE_ID_CONSENTED;
 
     @Test
@@ -71,40 +72,6 @@ public class GeneralMigrationServiceTest {
         assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
         assertNull(migrationService.getFailedCases());
         assertThat(migrationService.getMigratedCases(), is("1111"));
-    }
-
-    @Test
-    public void shouldNotProcessASingleCaseNotInCorrectState() {
-        CaseDetails caseDetails = createCaseDetails(1111L, CASE_TYPE);
-        caseDetails.setState("Random State");
-        when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
-                .thenReturn(caseDetails);
-        migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        assertThat(migrationService.getTotalNumberOfCases(), is(0));
-        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
-        assertNull(migrationService.getFailedCases());
-    }
-
-    @Test
-    public void shouldNotProcessASingleCaseThatDoesNotHaveLatestConsentOrder() {
-        Map<String, Object> caseData = new HashMap<>();
-
-        CaseDetails caseDetails = CaseDetails.builder()
-            .id(1111L)
-            .caseTypeId(CASE_TYPE)
-            .data(caseData)
-            .state("consentOrderMade")
-            .build();
-
-        caseDetails.setData(caseData);
-        when(ccdApi.getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID))
-            .thenReturn(caseDetails);
-        migrationService.processSingleCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        verify(ccdApi, times(1)).getCase(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_CASE_ID);
-        assertThat(migrationService.getTotalNumberOfCases(), is(0));
-        assertThat(migrationService.getTotalMigrationsPerformed(), is(0));
-        assertNull(migrationService.getFailedCases());
     }
 
     @Test
@@ -152,6 +119,40 @@ public class GeneralMigrationServiceTest {
         setupFields(true, true);
         setupMocks();
         migrationService.processAllTheCases(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_USER_ID, JURISDICTION_ID, CASE_TYPE);
+        assertThat(migrationService.getTotalNumberOfCases(), is(1));
+        assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
+        assertNull(migrationService.getFailedCases());
+        assertThat(migrationService.getMigratedCases(), is("1111"));
+    }
+
+    @Test
+    public void shouldCallSpecificEvent_whenSpecificMigrationEventIsSet() {
+        final Field field = ReflectionUtils.findField(GeneralMigrationService.class, "specificMigrationEvent");
+        ReflectionUtils.makeAccessible(field);
+        ReflectionUtils.setField(field, migrationService, "FR_migrateFrcCase");
+        setupFields(true, true);
+        setupMocks();
+        when(ccdUpdateService.update(caseDetails1.getId().toString(),
+                caseDetails1.getData(),
+                SPECIFIC_EVENT_ID,
+                TEST_USER_TOKEN,
+                EVENT_SUMMARY,
+                EVENT_DESCRIPTION,
+                CASE_TYPE))
+                .thenReturn(caseDetails1);
+        migrationService.processAllTheCases(TEST_USER_TOKEN, TEST_S2S_TOKEN, TEST_USER_ID, JURISDICTION_ID, CASE_TYPE);
+        verify(ccdUpdateService, times(1)).update(caseDetails1.getId().toString(), caseDetails1.getData(),
+                SPECIFIC_EVENT_ID,
+                TEST_USER_TOKEN,
+                EVENT_SUMMARY,
+                EVENT_DESCRIPTION,
+                CASE_TYPE);
+        verify(ccdUpdateService, times(0)).update(caseDetails1.getId().toString(), caseDetails1.getData(),
+                EVENT_ID,
+                TEST_USER_TOKEN,
+                EVENT_SUMMARY,
+                EVENT_DESCRIPTION,
+                CASE_TYPE);
         assertThat(migrationService.getTotalNumberOfCases(), is(1));
         assertThat(migrationService.getTotalMigrationsPerformed(), is(1));
         assertNull(migrationService.getFailedCases());

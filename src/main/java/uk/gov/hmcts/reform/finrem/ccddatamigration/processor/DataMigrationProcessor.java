@@ -38,8 +38,8 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Value("${ccd.caseId}")
     private String ccdCaseId;
 
-    @Value("${ccd.dryrun}")
-    private boolean dryRun;
+    @Value("${idam.s2s-auth.replaceBearer:false}")
+    private boolean replaceBearer;
 
     @Value("${log.debug}")
     private boolean debugEnabled;
@@ -70,7 +70,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
                 log.info("Start processing cases");
             }
             final String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
-            final String s2sToken = authTokenGenerator.generate();
+            final String s2sToken = replaceBearer ? authTokenGenerator.generate().replace("Bearer ", "") : authTokenGenerator.generate();
             final String userId = idamUserService.retrieveUserDetails(userToken).getId();
             if (debugEnabled) {
                 log.info("  userToken  : {}", userToken);
@@ -92,18 +92,14 @@ public class DataMigrationProcessor implements CommandLineRunner {
                     migrationService.processAllTheCases(userToken, s2sToken, userId, jurisdictionId, caseType);
                 });
             }
-            log.info("Migrated Cases {} ",
-                    isNotBlank(migrationService.getMigratedCases()) ? migrationService.getMigratedCases() : "NONE");
-
+            log.info("Migrated Cases {} ", isNotBlank(migrationService.getMigratedCases()) ? migrationService.getMigratedCases() : "NONE");
             log.info("-----------------------------");
             log.info("Data migration completed");
             log.info("-----------------------------");
             log.info("Total number of cases: " + migrationService.getTotalNumberOfCases());
             log.info("Total migrations performed: " + migrationService.getTotalMigrationsPerformed());
             log.info("-----------------------------");
-            log.info("Failed Cases: {}",
-                    isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
-
+            log.info("Failed Cases: {}", isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
         } catch (final Throwable e) {
             log.error("Migration failed with the following reason :" + e.getMessage());
             e.printStackTrace();

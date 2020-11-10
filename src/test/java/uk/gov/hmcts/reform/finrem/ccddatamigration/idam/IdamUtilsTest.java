@@ -30,13 +30,13 @@ public class IdamUtilsTest {
     private IdamUtils underTest;
 
     @ClassRule
-    public static final WireMockRule mockIdamServer = new WireMockRule(8080);
+    public static final WireMockRule mockIdamServer = new WireMockRule(8050);
 
     @Before
     public void setUp() {
         Field field = ReflectionUtils.findField(IdamUtils.class, "idamUserBaseUrl");
         ReflectionUtils.makeAccessible(field);
-        ReflectionUtils.setField(field, underTest, "http://localhost:8080");
+        ReflectionUtils.setField(field, underTest, "http://localhost:8050");
 
         Field field1 = ReflectionUtils.findField(IdamUtils.class, "idamRedirectUri");
         ReflectionUtils.makeAccessible(field1);
