@@ -98,8 +98,11 @@ public class DataMigrationProcessor implements CommandLineRunner {
             log.info("-----------------------------");
             log.info("Total number of cases: " + migrationService.getTotalNumberOfCases());
             log.info("Total migrations performed: " + migrationService.getTotalMigrationsPerformed());
+            log.info("Total cases skipped: " + migrationService.getTotalNumberOfSkips());
+            log.info("Total cases failed: " + migrationService.getTotalNumberOfFails());
             log.info("-----------------------------");
             log.info("Failed Cases: {}", isNotBlank(migrationService.getFailedCases()) ? migrationService.getFailedCases() : "NONE");
+            log.info("Skipped Cases: {}", isNotBlank(migrationService.getSkippedCases()) ? migrationService.getSkippedCases() : "NONE");
         } catch (final Throwable e) {
             log.error("Migration failed with the following reason :" + e.getMessage());
             e.printStackTrace();
