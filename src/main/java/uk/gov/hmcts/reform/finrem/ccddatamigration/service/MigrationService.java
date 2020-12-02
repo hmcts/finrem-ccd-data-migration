@@ -12,6 +12,12 @@ public interface MigrationService {
 
     String getFailedCases();
 
+    String getSkippedCases();
+
+    int getTotalNumberOfSkips();
+
+    int getTotalNumberOfFails();
+
     int getTotalMigrationsPerformed();
 
     int getTotalNumberOfCases();

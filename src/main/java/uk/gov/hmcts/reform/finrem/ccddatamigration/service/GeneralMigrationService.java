@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.finrem.ccddatamigration.service;
 
+import feign.FeignException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,9 +46,15 @@ public class GeneralMigrationService implements MigrationService {
     @Getter
     private int totalNumberOfCases;
     @Getter
+    private int totalNumberOfSkips;
+    @Getter
+    private int totalNumberOfFails;
+    @Getter
     private String failedCases;
     @Getter
     private String migratedCases;
+    @Getter
+    private String skippedCases;
 
     @Value("${log.debug}")
     private boolean debugEnabled;
@@ -111,7 +118,7 @@ public class GeneralMigrationService implements MigrationService {
         int caseCounter = 0;
         int duplicationCounter = 0;
         List<String> extractedCaseIds = new ArrayList<>();
-        String csvLine = "";
+        String csvLine;
 
         try (BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
             while ((csvLine = fileReader.readLine()) != null) {
@@ -198,23 +205,42 @@ public class GeneralMigrationService implements MigrationService {
         final String caseId = caseDetails.getId().toString();
         log.info("Processing case with Case ID: " + caseId);
         try {
-            if (specificMigrationEvent != null) {
-                callSpecificEventForCase(authorisation, caseDetails, caseType);
+            if (specificMigrationEvent != null && !specificMigrationEvent.isBlank()) {
+                if (specificMigrationEvent.equalsIgnoreCase("FR_migrateFrcCase")) { //RPET-164 specific section - might be removed later
+                    String northWestFRC = (String) caseDetails.getData().getOrDefault("northWestFRCList", "");
+                    String southWestFRC = (String) caseDetails.getData().getOrDefault("southWestFRCList", "");
+                    String southEastFRC = (String) caseDetails.getData().getOrDefault("southEastFRCList", "");
+                    String walesFRC = (String) caseDetails.getData().getOrDefault("walesFRCList", "");
+                    if ((northWestFRC != null && northWestFRC.equalsIgnoreCase("other"))
+                            || (southWestFRC != null && southWestFRC.equalsIgnoreCase("other"))
+                            || (southEastFRC != null && southEastFRC.equalsIgnoreCase("other"))
+                            || (walesFRC != null && walesFRC.equalsIgnoreCase("other"))) {
+                        callSpecificMigrateEventForCase(authorisation, caseDetails, caseType);
+                    } else {
+                        updateSkippedCases(caseDetails.getId());
+                        log.info("Case id {} is not migration candidate. Skipping...", caseId);
+                    }
+                } else {
+                    callSpecificMigrateEventForCase(authorisation, caseDetails, caseType);
+                }
             } else {
-                updateCase(authorisation, caseDetails, caseType);
+                callDefaultMigrateEventForCase(authorisation, caseDetails, caseType);
             }
             if (debugEnabled) {
                 log.info(caseId + " updated!");
             }
             updateMigratedCases(caseDetails.getId());
         } catch (final Exception e) {
-            log.error("Update failed for Case ID [{}] with error [{}] ", caseDetails.getId().toString(), e.getMessage());
+            if (e instanceof FeignException) {
+                log.error(((FeignException) e).contentUTF8());
+            } else {
+                log.error("Update failed for Case ID [{}] with error [{}] ", caseDetails.getId().toString(), e.getMessage());
+            }
             updateFailedCases(caseDetails.getId());
         }
     }
 
-    // Default updateCase
-    private void updateCase(final String authorisation, final CaseDetails caseDetails, final String caseType) {
+    private void callDefaultMigrateEventForCase(final String authorisation, final CaseDetails caseDetails, final String caseType) {
         final String caseId = caseDetails.getId().toString();
         final Object data = caseDetails.getData();
         if (debugEnabled) {
@@ -231,8 +257,7 @@ public class GeneralMigrationService implements MigrationService {
         totalMigrationsPerformed++;
     }
 
-    // Use this if you want to just run a specific event on all eligible cases - e.g. Send Order
-    private void callSpecificEventForCase(final String authorisation, final CaseDetails caseDetails, final String caseType) {
+    private void callSpecificMigrateEventForCase(final String authorisation, final CaseDetails caseDetails, final String caseType) {
         final String caseId = caseDetails.getId().toString();
         final Object data = caseDetails.getData();
         if (debugEnabled) {
@@ -251,10 +276,16 @@ public class GeneralMigrationService implements MigrationService {
     }
 
     private void updateFailedCases(final Long id) {
+        totalNumberOfFails++;
         failedCases = nonNull(failedCases) ? (failedCases + "," + id) : id.toString();
     }
 
     private void updateMigratedCases(final Long id) {
         migratedCases = nonNull(migratedCases) ? (migratedCases + "," + id) : id.toString();
+    }
+
+    private void updateSkippedCases(final Long id) {
+        totalNumberOfSkips++;
+        skippedCases = nonNull(skippedCases) ? (skippedCases + "," + id) : id.toString();
     }
 }
