@@ -203,7 +203,7 @@ public class GeneralMigrationService implements MigrationService {
     private void updateOneCase(final String authorisation, final CaseDetails caseDetails, final String caseType) {
         totalNumberOfCases++;
         final String caseId = caseDetails.getId().toString();
-        log.info("Processing case with Case ID: " + caseId);
+        log.info("Processing case with Case ID: " + caseId + " specificMigrationEvent:" + specificMigrationEvent);
         try {
             if (specificMigrationEvent != null && !specificMigrationEvent.isBlank()) {
                 if (specificMigrationEvent.equalsIgnoreCase("FR_migrateFrcCase")) { //RPET-164 specific section - might be removed later

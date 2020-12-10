@@ -47,6 +47,9 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Value("${ccd.file}")
     private String file;
 
+    @Value("${migration.specificEvent}")
+    private String specificMigrationEvent;
+
     @Autowired
     private IdamUserClient idamClient;
 
@@ -66,9 +69,7 @@ public class DataMigrationProcessor implements CommandLineRunner {
     @Override
     public void run(final String... args) {
         try {
-            if (debugEnabled) {
-                log.info("Start processing cases");
-            }
+            log.info("Start processing cases. specificMigrationEvent:{}", specificMigrationEvent);
             final String userToken = idamClient.generateUserTokenWithNoRoles(idamUserName, idamUserPassword);
             final String s2sToken = replaceBearer ? authTokenGenerator.generate().replace("Bearer ", "") : authTokenGenerator.generate();
             final String userId = idamUserService.retrieveUserDetails(userToken).getId();
